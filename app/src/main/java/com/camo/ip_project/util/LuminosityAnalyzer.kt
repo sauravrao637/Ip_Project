@@ -1,17 +1,19 @@
 package com.camo.ip_project.util
 
-import android.util.Log
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
+import com.camo.ip_project.util.Constants.MAX_HR_RANGE
+import com.camo.ip_project.util.Constants.MIN_HR_RANGE
+import com.camo.ip_project.util.Constants.MIN_RED_INTENSITY
+import com.camo.ip_project.util.Constants.SAMPLING_PERIOD
+import com.camo.ip_project.util.Utility.toByteArray
 import timber.log.Timber
-import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicBoolean
 
 
-typealias LumaListener = (luma: Double) -> Unit
+typealias LumaListener = (beat: Beat) -> Unit
 
 class LuminosityAnalyzer(private val listener: LumaListener) : ImageAnalysis.Analyzer {
-    val TAG = "LumAnal"
     private val processing: AtomicBoolean = AtomicBoolean(false)
     private var averageIndex = 0
     private val averageArraySize = 4
@@ -21,48 +23,52 @@ class LuminosityAnalyzer(private val listener: LumaListener) : ImageAnalysis.Ana
     private var beatsIndex = 0
     private val beatsArraySize = 3
     private val beatsArray = IntArray(beatsArraySize)
-    private var beats = 0.0
-    private var startTime: Long = 0
-
+    private var beats = 0
+    private var startTime: Long = -1
+    private var processingStartTime = System.currentTimeMillis()
     private var currentType = TYPE.GREEN
 
-    private fun ByteBuffer.toByteArray(): ByteArray {
-        rewind()    // Rewind the buffer to zero
-        val data = ByteArray(remaining())
-        get(data)   // Copy the buffer into a byte array
-        return data // Return the byte array
+    init {
+        Timber.d("Luminosity Analyzer")
     }
 
     override fun analyze(image: ImageProxy) {
-        if (!processing.compareAndSet(false, true)) return;
-        val width: Int = image.width
-        val height: Int = image.height
-        val buffer = image.planes[0].buffer
-        val data = buffer.toByteArray()
-        val imgAvg = ImageProcessing.decodeYUV420SPtoRedAvg(data,width/2,height/2)
-        Timber.d("imgavg: $imgAvg")
-        printt()
-        if (imgAvg == 0 || imgAvg == 255) {
-            processing.set(false);
+        if (!processing.compareAndSet(false, true)) {
             image.close()
-            return;
+            return
+        }
+        if(startTime == -1L) startTime = System.currentTimeMillis()
+        val width = image.width
+        val height = image.height
+        val data = Yuv.toBuffer(image).buffer.toByteArray()
+        val imgAvg =
+            ImageProcessing.decodeYUV420SPtoRGBAvg(data, width, height)[0].toInt()
+
+        printt(imgAvg)
+
+        if (imgAvg < MIN_RED_INTENSITY) {
+            listener(Beat.error("Place Finger properly"))
+            processing.set(false)
+            image.close()
+            return
         }
         var averageArrayAvg = 0
         var averageArrayCnt = 0
 
         for (i in averageArray.indices) {
-            if (averageArray[i] > 0) {
+            if (averageArray[i] > MIN_RED_INTENSITY) {
                 averageArrayAvg += averageArray[i]
                 averageArrayCnt++
             }
         }
-        val rollingAverage = if (averageArrayCnt > 0) averageArrayAvg / averageArrayCnt else 0
+        val rollingAverage = if (averageArrayCnt > 0) (averageArrayAvg / averageArrayCnt) else 0
         var newType: TYPE = currentType
         if (imgAvg < rollingAverage) {
             newType = TYPE.RED
-            if (newType !== currentType) {
+            if (newType != currentType) {
                 beats++
-                // Log.d(TAG, "BEAT!! beats="+beats);
+                listener(Beat.beat())
+                Timber.d("BEAT!! beats=$beats");
             }
         } else if (imgAvg > rollingAverage) {
             newType = TYPE.GREEN
@@ -74,28 +80,25 @@ class LuminosityAnalyzer(private val listener: LumaListener) : ImageAnalysis.Ana
 
         // Transitioned from one state to another to the same
 
-        // Transitioned from one state to another to the same
-        if (newType !== currentType) {
-            currentType = newType
-        }
+        currentType = newType
 
-        val endTime = System.currentTimeMillis()
-        val totalTimeInSecs = (endTime - startTime) / 1000.0
-        if (totalTimeInSecs >= 10) {
-            val bps = beats / totalTimeInSecs
-            val dpm = (bps * 60.0).toInt()
-            if (dpm < 30 || dpm > 180) {
+        val totalTimeInSecs = (System.currentTimeMillis() - startTime) / 1000.0
+        val bpm = ((beats / totalTimeInSecs) * 60.0).toInt()
+
+        Timber.d("totalTimeInSecs= $totalTimeInSecs , beats=$beats")
+
+        if (totalTimeInSecs >= SAMPLING_PERIOD) {
+            if (bpm < MIN_HR_RANGE || bpm > MAX_HR_RANGE) {
+                listener(Beat.error("Error $bpm"))
+                beats = 0
                 startTime = System.currentTimeMillis()
-                beats = 0.0
                 processing.set(false)
                 image.close()
                 return
             }
 
-             Log.d(TAG,
-             "totalTimeInSecs="+totalTimeInSecs+" beats="+beats);
             if (beatsIndex == beatsArraySize) beatsIndex = 0
-            beatsArray[beatsIndex] = dpm
+            beatsArray[beatsIndex] = bpm
             beatsIndex++
             var beatsArrayAvg = 0
             var beatsArrayCnt = 0
@@ -106,19 +109,53 @@ class LuminosityAnalyzer(private val listener: LumaListener) : ImageAnalysis.Ana
                 }
             }
             val beatsAvg = beatsArrayAvg / beatsArrayCnt
-            listener(beatsAvg*1.0)
+            listener(Beat.finalBeats(beatsAvg))
             startTime = System.currentTimeMillis()
-            beats = 0.0
+            beats = 0
         }
+//        if (totalTimeInSecs >= ESTIMATION_PERIOD) listener(Beat.poorEstimationBeats(bpm))
+        listener(Beat.progress((totalTimeInSecs*100/ SAMPLING_PERIOD).toInt()))
         processing.set(false)
         image.close()
         return
     }
 
-    private fun printt() {
-        Timber.d("${currentType},$averageArray,$beatsArray, $startTime")
+    private fun printt(imgAvg: Int) {
+        Timber.d("imgAvg: $imgAvg, ${currentType},${averageArray.contentToString()},${beatsArray.contentToString()}")
     }
 }
+
 enum class TYPE {
     GREEN, RED
+}
+
+enum class BeatDataType {
+    ANALYSIS, FINAL, Progress, Beat, Estimated, Error
+}
+
+data class Beat(
+    val beatDataType: BeatDataType,
+    val imgAvg: Int?,
+    val time: Long?,
+    val beats: Int?,
+    val progress: Int?,
+    val error: String?
+) {
+    companion object {
+        fun analysing(imgAvg: Int, time: Long): Beat =
+            Beat(BeatDataType.ANALYSIS, imgAvg, time, null, null, null)
+
+        fun finalBeats(beats: Int): Beat = Beat(BeatDataType.FINAL, null, null, beats, null, null)
+
+        fun progress(progress: Int): Beat =
+            Beat(BeatDataType.Progress, null, null, null, progress, null)
+
+        fun beat(): Beat = Beat(BeatDataType.Beat, null, null, null, null, null)
+
+        fun poorEstimationBeats(beats: Int): Beat =
+            Beat(BeatDataType.Estimated, null, null, beats, null, null)
+
+        fun error(error: String?): Beat =
+            Beat(BeatDataType.Error, null, null, null, null, error ?: "E")
+    }
 }

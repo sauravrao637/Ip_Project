@@ -3,12 +3,15 @@ package com.camo.ip_project.ui
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.hardware.camera2.CaptureRequest
 import android.os.Bundle
+import android.util.Range
 import android.util.Size
 import android.view.LayoutInflater
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.camera.camera2.interop.Camera2Interop
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
@@ -20,7 +23,12 @@ import androidx.lifecycle.lifecycleScope
 import com.camo.ip_project.R
 import com.camo.ip_project.databinding.ActivityMainBinding
 import com.camo.ip_project.ui.viewmodels.MainActivityVM
+import com.camo.ip_project.util.BeatDataType
+import com.camo.ip_project.util.Constants.IMAGE_HEIGHT
+import com.camo.ip_project.util.Constants.IMAGE_WIDTH
+import com.camo.ip_project.util.HRAnalyzer
 import com.camo.ip_project.util.LuminosityAnalyzer
+import com.camo.ip_project.util.NaiveAnalyzer
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collect
 import timber.log.Timber
@@ -73,7 +81,13 @@ class MainActivity : AppCompatActivity() {
     private fun setListeners() {
         lifecycleScope.launchWhenStarted {
             viewModel.beatState.collect {
-                binding.textView.text = it.data.toString()
+                if (it.data != null) binding.textView.text = if (it.data==-1) "MC" else it.data.toString()
+                else binding.textView.text = "-"
+            }
+        }
+        lifecycleScope.launchWhenStarted {
+            viewModel.beat.collect {
+                binding.ivHeart.setImageResource(if (it) R.drawable.ic_baseline_favorite_24 else R.drawable.ic_baseline_favorite_border_24)
             }
         }
     }
@@ -100,10 +114,9 @@ class MainActivity : AppCompatActivity() {
     private fun toggleAnalysis() {
         if (analyse) {
             detachAnalyzer()
-            camera?.cameraControl?.enableTorch(false)
+            viewModel.resetBeatData()
         } else {
             attachAnalyzer()
-            camera?.cameraControl?.enableTorch(true)
         }
         analyse = !analyse
     }
@@ -125,8 +138,33 @@ class MainActivity : AppCompatActivity() {
 
     private fun attachAnalyzer() {
         imageAnalyzer?.clearAnalyzer()
-        imageAnalyzer?.setAnalyzer(cameraExecutor, LuminosityAnalyzer { luma ->
-            viewModel.setBeats(luma)
+        imageAnalyzer?.setAnalyzer(cameraExecutor, HRAnalyzer { luma ->
+            when (luma.beatDataType) {
+                BeatDataType.ANALYSIS -> {
+                    Timber.d("imgAvg: ${luma.imgAvg}, time: ${luma.time}")
+                }
+                BeatDataType.FINAL -> {
+                    viewModel.setBeats(luma.beats!!)
+                    detachAnalyzer()
+                    analyse = false
+                }
+                BeatDataType.Estimated ->{
+                    viewModel.setBeats(luma.beats!!)
+                }
+                BeatDataType.Progress -> {
+                    binding.progressBar.setProgress(luma.progress!!, true)
+                    Timber.d("${luma.progress!!}")
+                }
+                BeatDataType.Beat -> {
+                    viewModel.beat()
+                }
+                BeatDataType.Error ->{
+                    viewModel.setBeats(-1)
+                    detachAnalyzer()
+                    analyse = false
+                }
+            }
+
         })
     }
 
@@ -148,10 +186,18 @@ class MainActivity : AppCompatActivity() {
                     it.setSurfaceProvider(binding.viewFinder.surfaceProvider)
                 }
 
-            imageAnalyzer = ImageAnalysis.Builder()
-//                .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
-                .setTargetResolution(Size(480, 640))
-                .setBackpressureStrategy(ImageAnalysis.STRATEGY_BLOCK_PRODUCER).build()
+            val builder = ImageAnalysis.Builder()
+            val ext: Camera2Interop.Extender<*> = Camera2Interop.Extender(builder)
+//            ext.setCaptureRequestOption(
+//                CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,
+//                Range<Int>(16, 17)
+//            )
+            ext.setCaptureRequestOption(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH)
+          imageAnalyzer = builder
+          .setTargetResolution(Size(IMAGE_WIDTH, IMAGE_HEIGHT))
+//                .setBackpressureStrategy(ImageAnalysis.STRATEGY_BLOCK_PRODUCER)
+//                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                .build()
 
             bindCameraUseCase()
         }, ContextCompat.getMainExecutor(this))

@@ -3,6 +3,12 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Users/asus/AndroidStudioProjects/Ip_Project/app/src/main/res/drawable/ic_baseline_favorite_24.xml" value="0.1125" />
+        <entry key="..\:/Users/asus/AndroidStudioProjects/Ip_Project/app/src/main/res/drawable/ic_baseline_favorite_border_24.xml" value="0.1125" />
+        <entry key="..\:/Users/asus/AndroidStudioProjects/Ip_Project/app/src/main/res/drawable/ic_launcher_background.xml" value="0.15925925925925927" />
+        <entry key="..\:/Users/asus/AndroidStudioProjects/Ip_Project/app/src/main/res/drawable/progress_heart.xml" value="0.1125" />
+        <entry key="..\:/Users/asus/AndroidStudioProjects/Ip_Project/app/src/main/res/drawable/red_heart_clip.xml" value="0.1125" />
+        <entry key="..\:/Users/asus/AndroidStudioProjects/Ip_Project/app/src/main/res/layout/activity_main.xml" value="0.1" />
         <entry key="..\:/Users/asus/AndroidStudioProjects/Template/app/src/main/res/layout/activity_main.xml" value="0.1" />
       </map>
     </option>
