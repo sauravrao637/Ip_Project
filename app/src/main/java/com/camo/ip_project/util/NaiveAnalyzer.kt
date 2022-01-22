@@ -7,6 +7,7 @@ import com.camo.ip_project.util.ImageProcessing.decodeYUV420SPtoRGBAvg
 import com.camo.ip_project.util.Utility.toByteArray
 import timber.log.Timber
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.math.roundToInt
 
 class NaiveAnalyzer(private val listener: LumaListener) : ImageAnalysis.Analyzer {
 
@@ -15,14 +16,27 @@ class NaiveAnalyzer(private val listener: LumaListener) : ImageAnalysis.Analyzer
             image.close()
             return
         }
+//        ignore first few frames
+        if (justStarted && System.currentTimeMillis() - startTime < 1000) {
+            processing.set(false)
+            image.close()
+            return
+        } else if (justStarted) {
+            justStarted = false
+            startTime = System.currentTimeMillis()
+        }
         val width = image.width
         val height = image.height
         val data = Yuv.toBuffer(image).buffer.toByteArray().clone()
-        val imgAvg = decodeYUV420SPtoRGBAvg(data, width, height)[0].toInt()
+        val imgAvg = decodeYUV420SPtoRGBAvg(
+            data,
+            width,
+            height
+        )[0]
 
         Timber.d("imgAvg: $imgAvg")
 
-        if ((imgAvg < MIN_RED_INTENSITY) && counter>=5) {
+        if ((imgAvg < MIN_RED_INTENSITY)) {
             processing.set(false)
             image.close()
             listener(Beat.error("Bad Frames"))
@@ -30,15 +44,15 @@ class NaiveAnalyzer(private val listener: LumaListener) : ImageAnalysis.Analyzer
             return
         }
         counter++
-        var averageArrayAvg = 0
-        var averageArrayCnt = 0
+        var averageArrayAvg = 0.0
+        var averageArrayCnt = 0.0
         for (i in averageArray.indices) {
             if (averageArray[i] > 0) {
                 averageArrayAvg += averageArray[i]
                 averageArrayCnt++
             }
         }
-        val rollingAverage = if (averageArrayCnt > 0) averageArrayAvg / averageArrayCnt else 0
+        val rollingAverage = if (averageArrayCnt > 0) averageArrayAvg / averageArrayCnt else 0.0
         var newType = current
         if (imgAvg < rollingAverage) {
             newType = TYPE.RED
@@ -50,7 +64,7 @@ class NaiveAnalyzer(private val listener: LumaListener) : ImageAnalysis.Analyzer
         } else if (imgAvg > rollingAverage) {
             newType = TYPE.GREEN
         }
-        if (averageIndex == averageArraySize) averageIndex = 0
+        if (averageIndex == RED_AVG_ARRAY_SIZE) averageIndex = 0
         averageArray[averageIndex] = imgAvg
         averageIndex++
 
@@ -73,7 +87,7 @@ class NaiveAnalyzer(private val listener: LumaListener) : ImageAnalysis.Analyzer
                 image.close()
                 return
             }
-            if (beatsIndex == beatsArraySize) beatsIndex = 0
+            if (beatsIndex == BEATS_ARRAY_SIZE) beatsIndex = 0
             beatsArray[beatsIndex] = bpm
             beatsIndex++
             var beatsArrayAvg = 0
@@ -84,7 +98,7 @@ class NaiveAnalyzer(private val listener: LumaListener) : ImageAnalysis.Analyzer
                     beatsArrayCnt++
                 }
             }
-            val beatsAvg = if(beatsArrayCnt!=0) beatsArrayAvg / beatsArrayCnt else 0
+            val beatsAvg = if (beatsArrayCnt != 0) beatsArrayAvg / beatsArrayCnt else 0
             Timber.d("bpm:$beatsAvg")
 //            if(beatsIndex <= beatsArray.size)
             listener(Beat.poorEstimationBeats(beatsAvg))
@@ -92,7 +106,7 @@ class NaiveAnalyzer(private val listener: LumaListener) : ImageAnalysis.Analyzer
             startTime = System.currentTimeMillis()
             beats = 0.0
         }
-        listener(Beat.progress((totalTimeInSecs*10).toInt()))
+        listener(Beat.progress((totalTimeInSecs * 10).toInt()))
         processing.set(false)
         image.close()
     }
@@ -100,17 +114,20 @@ class NaiveAnalyzer(private val listener: LumaListener) : ImageAnalysis.Analyzer
     private val processing = AtomicBoolean(false)
     private var averageIndex = 0
 
-    private val averageArray = IntArray(averageArraySize)
+    private val averageArray = DoubleArray(RED_AVG_ARRAY_SIZE)
     var current = TYPE.GREEN
         private set
     private var beatsIndex = 0
 
-    private val beatsArray = IntArray(beatsArraySize)
+    private val beatsArray = IntArray(BEATS_ARRAY_SIZE)
     private var beats = 0.0
-    private var startTime: Long = 0
+    private var startTime: Long = System.currentTimeMillis()
     private var counter = 0
+    private var justStarted = true
+
     companion object {
-        private const val averageArraySize = 4
-        private const val beatsArraySize = 3
+        private const val RED_AVG_ARRAY_SIZE = 16
+        private const val BEATS_ARRAY_SIZE = 3
+        private const val PRECISION = 1
     }
 }

@@ -138,7 +138,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun attachAnalyzer() {
         imageAnalyzer?.clearAnalyzer()
-        imageAnalyzer?.setAnalyzer(cameraExecutor, HRAnalyzer { luma ->
+        imageAnalyzer?.setAnalyzer(cameraExecutor, NaiveAnalyzer { luma ->
             when (luma.beatDataType) {
                 BeatDataType.ANALYSIS -> {
                     Timber.d("imgAvg: ${luma.imgAvg}, time: ${luma.time}")
