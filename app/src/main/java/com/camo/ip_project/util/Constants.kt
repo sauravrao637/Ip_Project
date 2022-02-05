@@ -8,4 +8,8 @@ object Constants {
     const val MIN_RED_INTENSITY = 200
     const val IMAGE_WIDTH = 1200
     const val IMAGE_HEIGHT = 1600
+    const val LOW_CO = 0.1
+    const val HIGH_CO = 2.0
+
+    const val DEBUG_MODE = true
 }

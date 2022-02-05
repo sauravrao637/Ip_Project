@@ -16,7 +16,7 @@ import javax.inject.Inject
 import kotlin.math.min
 
 @HiltViewModel
-class MainActivityVM @Inject constructor(
+class MainActivityyVM @Inject constructor(
     private val cgRepo: Repository
 ) : ViewModel() {
     private val _beatState = MutableStateFlow<Resource<Beat.BeatData>>(Resource.idle())

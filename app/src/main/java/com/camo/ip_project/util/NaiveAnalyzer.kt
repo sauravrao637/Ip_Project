@@ -4,6 +4,8 @@ import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import com.camo.ip_project.util.Constants.COMPLETE_SAMPLING_PERIOD
 import com.camo.ip_project.util.Constants.ESTIMATION_SAMPLING_PERIOD
+import com.camo.ip_project.util.Constants.HIGH_CO
+import com.camo.ip_project.util.Constants.LOW_CO
 import com.camo.ip_project.util.Constants.MAX_HR_RANGE
 import com.camo.ip_project.util.Constants.MIN_HR_RANGE
 import com.camo.ip_project.util.Constants.MIN_RED_INTENSITY
@@ -13,6 +15,7 @@ import com.camo.ip_project.util.ImageProcessing.fft2
 import com.camo.ip_project.util.Utility.getVarianceDouble
 import com.camo.ip_project.util.Utility.getVarianceLong
 import com.camo.ip_project.util.Utility.toByteArray
+import com.github.psambit9791.jdsp.filter.Butterworth
 import timber.log.Timber
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -26,22 +29,23 @@ class NaiveAnalyzer(private val listener: HeartBeatListener) : ImageAnalysis.Ana
             return
         }
         val currentTime = System.currentTimeMillis()
-//        ignore first few frames
-        if (justStarted && currentTime - startTime < 1000) {
+//        ignore first few seconds
+        if (justStarted && currentTime - startTime < 3000) {
             processing.set(false)
             image.close()
             return
         } else if (justStarted) {
             justStarted = false
             startTime = currentTime
+            firstStartTime = currentTime
         }
         val width = image.width
         val height = image.height
         val data = Yuv.toBuffer(image).buffer.toByteArray()
         image.close()
         val imgRgbAvgList = decodeYUV420SPtoRGBAvg(data, width, height)
-        var imgRAvg = imgRgbAvgList[0]
-        var imgBAvg = imgRgbAvgList[2]
+        val imgRAvg = imgRgbAvgList[0]
+        val imgBAvg = imgRgbAvgList[2]
         Timber.d("imgAvg: $imgRAvg, frameCounter = $analysed_frames, currentTime: $currentTime")
 
 //        report if frame is not good enough
@@ -56,16 +60,7 @@ class NaiveAnalyzer(private val listener: HeartBeatListener) : ImageAnalysis.Ana
             imgBAvgArray.clear()
             return
         }
-        if(rAvgList.size>=1){
-            svR += (imgRAvg - svR)/4
-            imgRAvg = svR
 
-            svB += (imgBAvg - svB)/4
-            imgBAvg = svB
-        }else{
-            svR = imgRAvg
-            svB = imgBAvg
-        }
         rAvgList.add(imgRAvg)
         timeList.add(currentTime)
 
@@ -109,11 +104,6 @@ class NaiveAnalyzer(private val listener: HeartBeatListener) : ImageAnalysis.Ana
         if (totalTime >= ESTIMATION_SAMPLING_PERIOD) {
             Timber.d("SAMPLE | Start time: ${startTime / 1000}, current time: ${currentTime/1000}, total time: $totalTime")
 
-            val red: Array<Double> = imgRAvgArray.toArray(arrayOfNulls(imgRAvgArray.size))
-            val samplingFreq = imgRAvgArray.size / totalTime
-            val bpmFft = (60 * fft(red, red.size, samplingFreq)).toInt()
-            val breathFFt = (60 * fft2(red, red.size, samplingFreq)).toInt()
-
             val meanR = imgRAvgArray.sum() / imgRAvgArray.size
             val meanB = imgBAvgArray.sum() / imgBAvgArray.size
             val varR = getVarianceDouble(imgRAvgArray)
@@ -123,8 +113,6 @@ class NaiveAnalyzer(private val listener: HeartBeatListener) : ImageAnalysis.Ana
 
             imgRAvgArray.clear()
             imgBAvgArray.clear()
-
-            Timber.d("SAMPLE | FFT bpm = $bpmFft, FFT breaths = $breathFFt, spo2: $spo2")
 
             val bps = beats / totalTime
             val bpm = (bps * 60.0).toInt()
@@ -152,15 +140,11 @@ class NaiveAnalyzer(private val listener: HeartBeatListener) : ImageAnalysis.Ana
             val bpmAvg = if (beatsArrayCnt != 0) beatsArrayAvg / beatsArrayCnt else 0
             Timber.d("SAMPLE | bpm avg over array:$bpmAvg")
 
-//            val rmssd = if (total <= 2) 0.0 else ((sum / (total - 2)).pow(0.5))
-
             val rmssd = getVarianceLong(rrIntervalsList)
             Timber.d("SAMPLE | RMSSD: $rmssd, intervalArray: $rrIntervalsList")
             if (beatsIndex < beatsArray.size)
                 listener(Beat.poorEstimateData(Beat.BeatData(bpmAvg, rmssd)))
             else {
-                Timber.d("DBG "+rAvgList.toArray().contentToString())
-                Timber.d("DBG "+timeList.toArray().contentToString())
                 listener(Beat.finalBeatData(Beat.BeatData(bpmAvg, rmssd)))
             }
             startTime = currentTime
@@ -184,7 +168,7 @@ class NaiveAnalyzer(private val listener: HeartBeatListener) : ImageAnalysis.Ana
     private var startTime: Long = System.currentTimeMillis()
     private var analysed_frames = 0
     private var justStarted = true
-
+    private var firstStartTime: Long = System.currentTimeMillis()
     //    RMSSD
     private var prevRPeakTime: Long = -1
     private var prevInterval: Long = -1
@@ -199,13 +183,10 @@ class NaiveAnalyzer(private val listener: HeartBeatListener) : ImageAnalysis.Ana
     private var stdR = 0.0
 
 //    smoothening
-    var svR = 0.0
-    var svB = 0.0
     private var rAvgList = arrayListOf<Double>()
-    private var bAvgList = arrayListOf<Double>()
     private var timeList = arrayListOf<Long>()
     companion object {
-        private const val RED_AVG_ARRAY_SIZE = 4
+        private const val RED_AVG_ARRAY_SIZE = 20
         private const val BEATS_ARRAY_SIZE = COMPLETE_SAMPLING_PERIOD / ESTIMATION_SAMPLING_PERIOD
     }
 }

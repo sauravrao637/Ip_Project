@@ -1,6 +1,8 @@
 package com.camo.ip_project.di
 
 import android.content.Context
+import android.content.SharedPreferences
+import androidx.preference.PreferenceManager
 import androidx.room.Room
 import com.camo.ip_project.database.Repository
 import com.camo.ip_project.database.local.LocalAppDb
@@ -16,7 +18,7 @@ import javax.inject.Singleton
 object Module {
     @Provides
     @Singleton
-    fun getAppDb(@ApplicationContext context: Context): LocalAppDb = Room.databaseBuilder(
+    fun provideAppDb(@ApplicationContext context: Context): LocalAppDb = Room.databaseBuilder(
         context.applicationContext,
         LocalAppDb::class.java,
         "appDB.db"
@@ -24,6 +26,11 @@ object Module {
 
     @Provides
     @Singleton
-    fun getRepo(@ApplicationContext context: Context): Repository = Repository(getAppDb(context))
+    fun provideRepo(@ApplicationContext context: Context): Repository = Repository(provideAppDb(context))
 
+    @Singleton
+    @Provides
+    fun provideSharedPreference(@ApplicationContext context: Context): SharedPreferences {
+        return PreferenceManager.getDefaultSharedPreferences(context)
+    }
 }
