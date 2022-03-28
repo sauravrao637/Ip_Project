@@ -106,6 +106,9 @@ dependencies {
         exclude group: 'org.apache.maven.surefire', module: 'surefire-api'
     }
 
+//    graphs
+    implementation 'com.jjoe64:graphview:4.2.2'
+
 //    preferences
     implementation 'androidx.preference:preference-ktx:1.2.0'
 

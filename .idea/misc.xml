@@ -3,21 +3,32 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Users/asus/AndroidStudioProjects/Ip_Project/app/src/main/res/drawable/clipped_ellipse.xml" value="0.1235" />
         <entry key="..\:/Users/asus/AndroidStudioProjects/Ip_Project/app/src/main/res/drawable/dot_default.xml" value="0.1085" />
         <entry key="..\:/Users/asus/AndroidStudioProjects/Ip_Project/app/src/main/res/drawable/dot_selected.xml" value="0.1085" />
+        <entry key="..\:/Users/asus/AndroidStudioProjects/Ip_Project/app/src/main/res/drawable/ellipse.xml" value="0.1" />
+        <entry key="..\:/Users/asus/AndroidStudioProjects/Ip_Project/app/src/main/res/drawable/heart_9.xml" value="0.1085" />
+        <entry key="..\:/Users/asus/AndroidStudioProjects/Ip_Project/app/src/main/res/drawable/ic_backg.xml" value="0.1235" />
         <entry key="..\:/Users/asus/AndroidStudioProjects/Ip_Project/app/src/main/res/drawable/ic_baseline_favorite_24.xml" value="0.1125" />
         <entry key="..\:/Users/asus/AndroidStudioProjects/Ip_Project/app/src/main/res/drawable/ic_baseline_favorite_border_24.xml" value="0.1125" />
+        <entry key="..\:/Users/asus/AndroidStudioProjects/Ip_Project/app/src/main/res/drawable/ic_ekg_heart.xml" value="0.217" />
         <entry key="..\:/Users/asus/AndroidStudioProjects/Ip_Project/app/src/main/res/drawable/ic_launcher_background.xml" value="0.15925925925925927" />
         <entry key="..\:/Users/asus/AndroidStudioProjects/Ip_Project/app/src/main/res/drawable/progress_heart.xml" value="0.1125" />
         <entry key="..\:/Users/asus/AndroidStudioProjects/Ip_Project/app/src/main/res/drawable/red_heart_clip.xml" value="0.1125" />
+        <entry key="..\:/Users/asus/AndroidStudioProjects/Ip_Project/app/src/main/res/drawable/splasg_bg.xml" value="0.1235" />
+        <entry key="..\:/Users/asus/AndroidStudioProjects/Ip_Project/app/src/main/res/drawable/splash_backgroud.xml" value="0.1235" />
         <entry key="..\:/Users/asus/AndroidStudioProjects/Ip_Project/app/src/main/res/drawable/tab_selector.xml" value="0.1085" />
         <entry key="..\:/Users/asus/AndroidStudioProjects/Ip_Project/app/src/main/res/layout/activity_main.xml" value="0.2" />
         <entry key="..\:/Users/asus/AndroidStudioProjects/Ip_Project/app/src/main/res/layout/activity_main2.xml" value="0.11979166666666667" />
+        <entry key="..\:/Users/asus/AndroidStudioProjects/Ip_Project/app/src/main/res/layout/activity_splash.xml" value="0.11474164133738601" />
         <entry key="..\:/Users/asus/AndroidStudioProjects/Ip_Project/app/src/main/res/layout/activityy_main.xml" value="0.18115942028985507" />
         <entry key="..\:/Users/asus/AndroidStudioProjects/Ip_Project/app/src/main/res/layout/ask_permissions_page.xml" value="0.18115942028985507" />
         <entry key="..\:/Users/asus/AndroidStudioProjects/Ip_Project/app/src/main/res/layout/fragment_home.xml" value="0.18115942028985507" />
         <entry key="..\:/Users/asus/AndroidStudioProjects/Ip_Project/app/src/main/res/layout/getting_started_page1.xml" value="0.18115942028985507" />
+        <entry key="..\:/Users/asus/AndroidStudioProjects/Ip_Project/app/src/main/res/layout/splash_screen.xml" value="0.1" />
+        <entry key="..\:/Users/asus/AndroidStudioProjects/Ip_Project/app/src/main/res/layout/start_activity.xml" value="0.11041666666666666" />
         <entry key="..\:/Users/asus/AndroidStudioProjects/Ip_Project/app/src/main/res/menu/bottom_nav_menu.xml" value="0.13385416666666666" />
+        <entry key="..\:/Users/asus/AndroidStudioProjects/Ip_Project/app/src/main/res/xml/root_preferences.xml" value="0.11096014492753623" />
         <entry key="..\:/Users/asus/AndroidStudioProjects/Ip_Project/app/src/main/res/xml/settings.xml" value="0.2" />
         <entry key="..\:/Users/asus/AndroidStudioProjects/Template/app/src/main/res/layout/activity_main.xml" value="0.1" />
       </map>

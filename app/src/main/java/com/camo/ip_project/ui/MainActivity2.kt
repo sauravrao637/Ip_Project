@@ -12,19 +12,21 @@ import com.camo.ip_project.R
 import com.camo.ip_project.databinding.ActivityMain2Binding
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import dagger.hilt.android.AndroidEntryPoint
+import timber.log.Timber
 
 
 @AndroidEntryPoint
-class MainActivity2 : AppCompatActivity() {
+class MainActivity2 : BaseActivity() {
 
     private lateinit var binding: ActivityMain2Binding
     var navController: NavController? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         binding = ActivityMain2Binding.inflate(LayoutInflater.from(this))
         setContentView(binding.root)
-
+        Timber.d("dbg = ${isDebugging()}")
         val navView: BottomNavigationView = binding.navView
 
         navController = findNavController(R.id.nav_host_fragment_activity_main2)

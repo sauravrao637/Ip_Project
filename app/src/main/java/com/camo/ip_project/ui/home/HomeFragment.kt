@@ -1,5 +1,6 @@
 package com.camo.ip_project.ui.home
 
+import android.content.SharedPreferences
 import android.hardware.camera2.CaptureRequest
 import android.os.Bundle
 import android.util.Size
@@ -19,7 +20,9 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.camo.ip_project.R
 import com.camo.ip_project.databinding.FragmentHomeBinding
+import com.camo.ip_project.ui.BaseActivity
 import com.camo.ip_project.util.Constants
+import com.camo.ip_project.util.Constants.MIN_RED_INTENSITY
 import com.camo.ip_project.util.RAnalyzer
 import com.camo.ip_project.util.Status
 import dagger.hilt.android.AndroidEntryPoint
@@ -34,6 +37,7 @@ import java.util.concurrent.Executors
 @androidx.camera.camera2.interop.ExperimentalCamera2Interop
 class HomeFragment : Fragment() {
 
+    private lateinit var baseActivity: BaseActivity
     private var _binding: FragmentHomeBinding? = null
 
     // This property is only valid between onCreateView and
@@ -49,6 +53,7 @@ class HomeFragment : Fragment() {
     private lateinit var cameraExecutor: ExecutorService
     private val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
+    lateinit var sharedPreferences: SharedPreferences
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -57,6 +62,9 @@ class HomeFragment : Fragment() {
 
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         val root: View = binding.root
+        baseActivity = activity as BaseActivity
+        sharedPreferences = baseActivity.sharedPreferences
+        Timber.d("dbg: ${isDebugging()}")
 
         startCamera()
         cameraExecutor = Executors.newSingleThreadExecutor()
@@ -70,14 +78,13 @@ class HomeFragment : Fragment() {
 
         lifecycleScope.launchWhenStarted {
             homeViewModel.analysisState.collect {
-                Timber.d("it $it")
                 if (it) {
-                    withContext(Dispatchers.Main){
+                    withContext(Dispatchers.Main) {
                         attachAnalyzer()
                         binding.cameraCaptureButton.text = requireContext().getText(R.string.cancel)
                     }
                 } else {
-                    withContext(Dispatchers.Main){
+                    withContext(Dispatchers.Main) {
                         detachAnalyzer()
                         binding.cameraCaptureButton.text = requireContext().getText(R.string.start)
                     }
@@ -86,22 +93,22 @@ class HomeFragment : Fragment() {
         }
         lifecycleScope.launchWhenStarted {
             homeViewModel.analysedData.collect {
-                when(it.status){
-                    Status.ERROR ->{
-                        withContext(Dispatchers.Main){
-                            Toast.makeText(context,it.errorInfo,Toast.LENGTH_SHORT).show()
+                when (it.status) {
+                    Status.ERROR -> {
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(context, it.errorInfo, Toast.LENGTH_SHORT).show()
                         }
                     }
-                    Status.IDLE ->{
+                    Status.IDLE -> {
 
                     }
-                    Status.LOADING ->{
-                        withContext(Dispatchers.Main){
-                            Toast.makeText(context,"Hold a sec",Toast.LENGTH_SHORT).show()
+                    Status.LOADING -> {
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(context, "Hold a sec", Toast.LENGTH_SHORT).show()
                         }
                     }
-                    Status.SUCCESS ->{
-                        withContext(Dispatchers.Main){
+                    Status.SUCCESS -> {
+                        withContext(Dispatchers.Main) {
                             binding.tvRmssd.text = it.data!!.rmssd.toString()
                             binding.tvBpm.text = it.data.bpm.toString()
                         }
@@ -109,14 +116,21 @@ class HomeFragment : Fragment() {
                 }
             }
         }
-
         lifecycleScope.launchWhenStarted {
             homeViewModel.analysisProgress.collect {
-                withContext(Dispatchers.Main){
-                    binding.progressBar.setProgress(it,true)
+                withContext(Dispatchers.Main) {
+                    binding.progressBar.setProgress(it, true)
                 }
             }
         }
+        binding.graphView.apply {
+            addSeries(homeViewModel.mSeries1)
+            viewport.isXAxisBoundsManual = true
+            viewport.setMinX(0.0)
+            viewport.setMaxX(10.0)
+
+        }
+
     }
 
     private fun attachAnalyzer() {
@@ -129,15 +143,17 @@ class HomeFragment : Fragment() {
                     homeViewModel.processingComplete()
                 },
                 signalListener = { rAvg, t ->
-                                 homeViewModel.signalListener(rAvg,t)
+                    homeViewModel.signalListener(rAvg, t)
                 },
-                errorListener = {
-                    error -> homeViewModel.errorInAnalysis(error)
-                }
+                errorListener = { error ->
+                    homeViewModel.errorInAnalysis(error)
+                },
+                cameraStabilizingTime = baseActivity.getPreferredCST()
             )
         )
     }
 
+    private fun isDebugging() = baseActivity.isDebugging()
     private fun detachAnalyzer() {
         imageAnalyzer?.clearAnalyzer()
     }

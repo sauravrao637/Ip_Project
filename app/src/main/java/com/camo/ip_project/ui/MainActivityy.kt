@@ -1,6 +1,5 @@
 package com.camo.ip_project.ui
 
-
 import android.hardware.camera2.CaptureRequest
 import android.os.Bundle
 import android.util.Size
@@ -32,7 +31,6 @@ import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-
 
 @AndroidEntryPoint
 @androidx.camera.camera2.interop.ExperimentalCamera2Interop

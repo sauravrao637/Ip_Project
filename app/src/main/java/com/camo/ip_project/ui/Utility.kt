@@ -12,13 +12,14 @@ import java.io.IOException
 object Utility {
     val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE)
     const val PERMISSIONS_ALL = 1
+    const val DEFAULT_CST = 1000
     object PreferenceKey{
         const val DEBUG = "debug"
         const val LAUNCH_COUNT = "launch_count"
         const val DBG_CATEGORY = "dbg_category"
         const val CAMERA_STABILIZING_TIME = "dbg_cam_stabilizing_time"
     }
-    fun getOutputDirectory(context: Context): File {
+    private fun getOutputDirectory(context: Context): File {
         val mediaDir = context.externalMediaDirs.firstOrNull()?.let {
             File(it, context.resources.getString(R.string.app_name)).apply { mkdirs() }
         }

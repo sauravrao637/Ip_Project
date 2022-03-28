@@ -2,15 +2,10 @@ package com.camo.ip_project.util
 
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
+import com.camo.ip_project.ui.Utility.DEFAULT_CST
 import com.camo.ip_project.util.Constants.COMPLETE_SAMPLING_PERIOD
 import com.camo.ip_project.util.Constants.MIN_RED_INTENSITY
-import com.camo.ip_project.util.Utility.getVarianceDouble
 import com.camo.ip_project.util.Utility.toByteArray
-import com.github.psambit9791.jdsp.filter.Butterworth
-import com.github.psambit9791.jdsp.misc.UtilMethods
-import com.github.psambit9791.jdsp.signal.Smooth
-import com.github.psambit9791.jdsp.signal.peaks.FindPeak
-import com.github.psambit9791.jdsp.splines.CubicSpline
 import timber.log.Timber
 import java.lang.Double.min
 import java.util.concurrent.atomic.AtomicBoolean
@@ -18,20 +13,25 @@ import java.util.concurrent.atomic.AtomicBoolean
 typealias EndListener = () -> Unit
 typealias ProgressListener = (progress: Double) -> Unit
 typealias ErrorListener = (error: String) -> Unit
-typealias SignalListener = (redIntensity: Double,time: Long) -> Unit
+typealias SignalListener = (redIntensity: Double, time: Long) -> Unit
+
 class RAnalyzer(
     private val progressListener: ProgressListener,
     private val endListener: EndListener,
     private val errorListener: ErrorListener,
     private val signalListener: SignalListener,
-    private val cameraStabilizingTime: Int = 1000
+    private val cameraStabilizingTime: Int = DEFAULT_CST
 ) :
     ImageAnalysis.Analyzer {
+
     private val processing = AtomicBoolean(false)
     private var startedAt: Long = -1
     private var stableStartAt: Long = -1
     private var counter = 0
 
+    init {
+        Timber.d("RAnalyzer Initialized, cst: $cameraStabilizingTime")
+    }
     override fun analyze(image: ImageProxy) {
         if (!processing.compareAndSet(false, true)) {
             image.close()
@@ -67,7 +67,7 @@ class RAnalyzer(
             reset()
             return
         }
-        signalListener(imgRAvg,currentTime)
+        signalListener(imgRAvg, currentTime)
         val elapsedAnalysisTime = (currentTime - stableStartAt) / 1000
         progressListener(min(100.0, elapsedAnalysisTime * 100.0 / COMPLETE_SAMPLING_PERIOD))
 
