@@ -19,16 +19,32 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                                         *
  *****************************************************************************************/
 
-package com.camo.ip_project.ui.dashboard
+package com.camo.ip_project.ui.adapters
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
+import android.content.Context
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.recyclerview.widget.RecyclerView
 
-class DashboardViewModel : ViewModel() {
+class VpAdapterForLayouts(private val context: Context, private val layouts: ArrayList<Int>) :
+    RecyclerView.Adapter<VpAdapterForLayouts.ViewPagerHolder>() {
 
-    private val _text = MutableLiveData<String>().apply {
-        value = "This is dashboard Fragment"
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewPagerHolder {
+        return ViewPagerHolder(LayoutInflater.from(parent.context).inflate(viewType, parent, false))
     }
-    val text: LiveData<String> = _text
+
+    override fun getItemCount(): Int = layouts.size
+
+    override fun onBindViewHolder(holder: ViewPagerHolder, position: Int) {
+
+    }
+
+    override fun getItemViewType(position: Int): Int {
+        return layouts[position]
+    }
+
+    inner class ViewPagerHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+
+    }
 }

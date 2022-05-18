@@ -10,9 +10,9 @@
     <PreferenceCategory android:key="dbg_category"
         android:title="Debug Options">
         <DropDownPreference
-            android:entries="@array/camera_stabilizing_time"
+            android:entries="@array/camera_stabilizing_time_entries"
             android:summary="huhuihui"
-            android:entryValues="@array/camera_stabilizing_time"
+            android:entryValues="@array/camera_stabilizing_time_values"
             android:key="dbg_cam_stabilizing_time"
             android:title="Camera Stabilizing Time" />
     </PreferenceCategory>

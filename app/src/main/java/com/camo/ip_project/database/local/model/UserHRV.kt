@@ -19,16 +19,20 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                                         *
  *****************************************************************************************/
 
-package com.camo.ip_project.ui.dashboard
+package com.camo.ip_project.database.local.model
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
+import androidx.room.Entity
+import androidx.room.Index
+import androidx.room.PrimaryKey
 
-class DashboardViewModel : ViewModel() {
-
-    private val _text = MutableLiveData<String>().apply {
-        value = "This is dashboard Fragment"
-    }
-    val text: LiveData<String> = _text
-}
+@Entity(indices = [Index("userName")])
+class UserHRV(
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0,
+    val userName: String,
+    val heartRate: Int,
+    val sdnn: Int,
+    val rmssd: Int,
+    val nni: Int,
+    val unixTimestamp: Long
+)

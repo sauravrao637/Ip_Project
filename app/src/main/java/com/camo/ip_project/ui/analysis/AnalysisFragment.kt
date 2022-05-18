@@ -1,9 +1,30 @@
-package com.camo.ip_project.ui.home
+/****************************************************************************************
+ * Copyright <2022> <Saurav Rao> <sauravrao637@gmail.com>                                *
+ *                                                                                       *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this  *
+ * software and associated documentation files (the "Software"), to deal in the Software *
+ * without restriction, including without limitation the rights to use, copy, modify,    *
+ * merge, publish, distribute, sublicense, and/or sell copies of the Software, and to    *
+ * permit persons to whom the Software is furnished to do so, subject to the following   *
+ * conditions:                                                                           *
+ *                                                                                       *
+ * The above copyright notice and this permission notice shall be included in all copies *
+ * or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,   *
+ * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A         *
+ * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT    *
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF  *
+ * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE  *
+ * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                                         *
+ *****************************************************************************************/
+
+package com.camo.ip_project.ui.analysis
 
 import android.content.SharedPreferences
 import android.hardware.camera2.CaptureRequest
 import android.os.Bundle
-import android.util.Size
+import android.util.Range
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -19,12 +40,12 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.camo.ip_project.R
-import com.camo.ip_project.databinding.FragmentHomeBinding
+import com.camo.ip_project.databinding.FragmentAnalysisBinding
 import com.camo.ip_project.ui.BaseActivity
-import com.camo.ip_project.util.Constants
-import com.camo.ip_project.util.Constants.MIN_RED_INTENSITY
+import com.camo.ip_project.ui.Utility.OUTPUT_DATA
 import com.camo.ip_project.util.RAnalyzer
 import com.camo.ip_project.util.Status
+import com.jjoe64.graphview.series.LineGraphSeries
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
@@ -33,19 +54,19 @@ import timber.log.Timber
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
+/*
+    This fragment is responsible for handling the hrv analysis using the camerax api
+ */
 @AndroidEntryPoint
 @androidx.camera.camera2.interop.ExperimentalCamera2Interop
-class HomeFragment : Fragment() {
+class AnalysisFragment : Fragment() {
 
     private lateinit var baseActivity: BaseActivity
-    private var _binding: FragmentHomeBinding? = null
-
-    // This property is only valid between onCreateView and
-    // onDestroyView.
+    private var _binding: FragmentAnalysisBinding? = null
     private val binding get() = _binding!!
-    private val homeViewModel: HomeViewModel by viewModels()
+    private val viewModel: AnalysisFragmentViewModel by viewModels()
 
-    //    camera
+    //camera
     private var preview: Preview? = null
     private var cameraProvider: ProcessCameraProvider? = null
     private var camera: Camera? = null
@@ -59,25 +80,39 @@ class HomeFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-
-        _binding = FragmentHomeBinding.inflate(inflater, container, false)
+        _binding = FragmentAnalysisBinding.inflate(inflater, container, false)
         val root: View = binding.root
         baseActivity = activity as BaseActivity
         sharedPreferences = baseActivity.sharedPreferences
-        Timber.d("dbg: ${isDebugging()}")
-
-        startCamera()
-        cameraExecutor = Executors.newSingleThreadExecutor()
-
+        Timber.d("dbg: ${allowDebugging()}")
+        setupUi()
         listeners()
         return root
     }
 
-    private fun listeners() {
-        binding.cameraCaptureButton.setOnClickListener { homeViewModel.toggleAnalysis() }
+    private fun setupUi() {
+        startCamera()
+        cameraExecutor = Executors.newSingleThreadExecutor()
+        binding.graphView.apply {
+            viewport.isXAxisBoundsManual = true
+            viewport.setMinX(0.0)
+            viewport.setMaxX(10.0)
+            addSeries(viewModel.mSeries1)
+            viewport.setDrawBorder(true)
+        }
+        binding.graphView2.apply {
+            viewport.setDrawBorder(true)
+            viewport.isScrollable = true
+            viewport.isScalable = true
+        }
+    }
 
+    private fun listeners() {
+        binding.cameraCaptureButton.setOnClickListener {
+            viewModel.toggleAnalysis()
+        }
         lifecycleScope.launchWhenStarted {
-            homeViewModel.analysisState.collect {
+            viewModel.analysisState.collect {
                 if (it) {
                     withContext(Dispatchers.Main) {
                         attachAnalyzer()
@@ -92,45 +127,57 @@ class HomeFragment : Fragment() {
             }
         }
         lifecycleScope.launchWhenStarted {
-            homeViewModel.analysedData.collect {
+            viewModel.analysedData.collect {
                 when (it.status) {
                     Status.ERROR -> {
                         withContext(Dispatchers.Main) {
+                            binding.graphView.visibility = View.GONE
+                            binding.graphView2.visibility = View.GONE
                             Toast.makeText(context, it.errorInfo, Toast.LENGTH_SHORT).show()
                         }
+                        binding.cameraCaptureButton.isEnabled = true
                     }
                     Status.IDLE -> {
-
+                        binding.cameraCaptureButton.isEnabled = true
+                        binding.result.apply {
+                            tvBpm.text = ""
+                            tvRmssd.text = ""
+                            tvSdnn.text = ""
+                            tvNni.text = ""
+                        }
+                        binding.graphView.visibility = View.VISIBLE
+                        binding.graphView2.visibility = View.GONE
                     }
                     Status.LOADING -> {
                         withContext(Dispatchers.Main) {
                             Toast.makeText(context, "Hold a sec", Toast.LENGTH_SHORT).show()
                         }
+                        binding.cameraCaptureButton.isEnabled = false
                     }
                     Status.SUCCESS -> {
-                        withContext(Dispatchers.Main) {
-                            binding.tvRmssd.text = it.data!!.rmssd.toString()
-                            binding.tvBpm.text = it.data.bpm.toString()
+                        (activity as BaseActivity).writeToTxtFile(OUTPUT_DATA, it.data!!.outText)
+                        binding.result.apply {
+                            tvBpm.text = it.data.bpm.toString()
+                            tvRmssd.text = it.data.rmssd.toString()
+                            tvSdnn.text = it.data.sd.toString()
+                            tvNni.text = it.data.NNI.toString()
                         }
+                        binding.cameraCaptureButton.isEnabled = true
+                        binding.graphView.visibility = View.GONE
+                        binding.graphView2.visibility = View.VISIBLE
+                        binding.graphView2.removeAllSeries()
+                        binding.graphView2.addSeries(LineGraphSeries(it.data.resampledData))
                     }
                 }
             }
         }
         lifecycleScope.launchWhenStarted {
-            homeViewModel.analysisProgress.collect {
+            viewModel.analysisProgress.collect {
                 withContext(Dispatchers.Main) {
                     binding.progressBar.setProgress(it, true)
                 }
             }
         }
-        binding.graphView.apply {
-            addSeries(homeViewModel.mSeries1)
-            viewport.isXAxisBoundsManual = true
-            viewport.setMinX(0.0)
-            viewport.setMaxX(10.0)
-
-        }
-
     }
 
     private fun attachAnalyzer() {
@@ -138,22 +185,22 @@ class HomeFragment : Fragment() {
         imageAnalyzer?.setAnalyzer(
             cameraExecutor,
             RAnalyzer(
-                progressListener = { progress -> homeViewModel.updateProgress(progress) },
+                progressListener = { progress -> viewModel.updateProgress(progress) },
                 endListener = {
-                    homeViewModel.processingComplete()
+                    viewModel.processingComplete()
                 },
                 signalListener = { rAvg, t ->
-                    homeViewModel.signalListener(rAvg, t)
+                    viewModel.signalListener(rAvg, t)
                 },
                 errorListener = { error ->
-                    homeViewModel.errorInAnalysis(error)
+                    viewModel.errorInAnalysis(error)
                 },
                 cameraStabilizingTime = baseActivity.getPreferredCST()
             )
         )
     }
 
-    private fun isDebugging() = baseActivity.isDebugging()
+    private fun allowDebugging() = baseActivity.allowDebugging()
     private fun detachAnalyzer() {
         imageAnalyzer?.clearAnalyzer()
     }
@@ -171,14 +218,13 @@ class HomeFragment : Fragment() {
 
             val builder = ImageAnalysis.Builder()
             val ext: Camera2Interop.Extender<*> = Camera2Interop.Extender(builder)
-//            To set frame rates
-//            ext.setCaptureRequestOption(
-//                CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,
-//                Range<Int>(30, 30)
-//            )
             ext.setCaptureRequestOption(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH)
+//            To set frame rates
+            ext.setCaptureRequestOption(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, Range(30, 30))
+            ext.setCaptureRequestOption(CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION, 1)
             imageAnalyzer =
-                builder.setTargetResolution(Size(Constants.IMAGE_WIDTH, Constants.IMAGE_HEIGHT))
+                builder
+//                .setTargetResolution(Size(Constants.IMAGE_WIDTH, Constants.IMAGE_HEIGHT))
                     .build()
 
             bindCameraUseCase()

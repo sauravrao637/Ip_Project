@@ -19,16 +19,44 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                                         *
  *****************************************************************************************/
 
-package com.camo.ip_project.ui.dashboard
+package com.camo.ip_project.ui.info
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
+import android.content.Intent
+import android.net.Uri
+import android.view.LayoutInflater
+import android.view.ViewGroup
+import androidx.recyclerview.widget.RecyclerView
+import com.camo.ip_project.databinding.LibraryUsedLayoutBinding
+import com.camo.ip_project.util.Constants.librariesUsed
 
-class DashboardViewModel : ViewModel() {
-
-    private val _text = MutableLiveData<String>().apply {
-        value = "This is dashboard Fragment"
+class LibrariesUsedRVAdapter : RecyclerView.Adapter<LibrariesUsedRVAdapter.ViewHolder>() {
+    class ViewHolder(val binding: LibraryUsedLayoutBinding) :
+        RecyclerView.ViewHolder(binding.root) {
     }
-    val text: LiveData<String> = _text
+
+    private val _items get() = librariesUsed
+
+    override fun onCreateViewHolder(viewGroup: ViewGroup, viewType: Int): ViewHolder {
+        val binding = LibraryUsedLayoutBinding.inflate(
+            LayoutInflater.from(viewGroup.context),
+            viewGroup,
+            false
+        )
+        return ViewHolder(binding)
+    }
+
+    override fun onBindViewHolder(viewHolder: ViewHolder, position: Int) {
+        with(viewHolder.binding) {
+            tvLibraryName.text = _items[position].title
+            tvLibDesc.text = _items[position].desc
+            btnViewLibrary.setOnClickListener {
+                val i = Intent(Intent.ACTION_VIEW, Uri.parse(_items[position].link))
+                root.context.startActivity(i)
+            }
+        }
+    }
+
+    // Return the size of your dataset (invoked by the layout manager)
+    override fun getItemCount() = _items.size
+
 }

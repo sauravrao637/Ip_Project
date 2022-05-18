@@ -1,6 +1,5 @@
 package com.camo.ip_project.util
 
-
 data class Resource<out T>(val status: Status, val data: T?, val errorInfo: String?) {
     companion object {
         fun <T> idle(): Resource<T> = Resource(status = Status.IDLE, null, null)

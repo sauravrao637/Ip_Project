@@ -19,16 +19,48 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                                         *
  *****************************************************************************************/
 
-package com.camo.ip_project.ui.dashboard
+package com.camo.ip_project.ui
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
+import android.os.Bundle
+import android.view.LayoutInflater
+import androidx.navigation.NavController
+import androidx.navigation.findNavController
+import androidx.navigation.ui.AppBarConfiguration
+import androidx.navigation.ui.setupActionBarWithNavController
+import androidx.navigation.ui.setupWithNavController
+import com.camo.ip_project.R
+import com.camo.ip_project.databinding.ActivityMainBinding
+import dagger.hilt.android.AndroidEntryPoint
+import timber.log.Timber
 
-class DashboardViewModel : ViewModel() {
+@AndroidEntryPoint
+class MainActivity : BaseActivity() {
 
-    private val _text = MutableLiveData<String>().apply {
-        value = "This is dashboard Fragment"
+    private lateinit var binding: ActivityMainBinding
+    private var navController: NavController? = null
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        binding = ActivityMainBinding.inflate(LayoutInflater.from(this))
+        setContentView(binding.root)
+        Timber.d("dbg = ${allowDebugging()}")
+        val navView = binding.navView
+
+        navController = findNavController(R.id.nav_host_fragment_activity_main2)
+        // Passing each menu ID as a set of Ids because each
+        // menu should be considered as top level destinations.
+        val appBarConfiguration = AppBarConfiguration(
+            setOf(
+                R.id.navigation_analysis, R.id.navigation_dashboard, R.id.navigation_about_info
+            )
+        )
+        setupActionBarWithNavController(navController!!, appBarConfiguration)
+        navView.setupWithNavController(navController!!)
     }
-    val text: LiveData<String> = _text
+
+    override fun onSupportNavigateUp(): Boolean {
+        return (navController?.navigateUp()
+            ?: super.onSupportNavigateUp()) || super.onSupportNavigateUp()
+    }
 }

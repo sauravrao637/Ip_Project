@@ -21,7 +21,6 @@
         <activity
             android:name=".ui.StartActivity"
             android:exported="true"
-            android:label="@string/app_name"
             android:theme="@style/Theme.AppCompat.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -29,15 +28,12 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".ui.MainActivity2"
+            android:name=".ui.MainActivity"
             android:exported="false"
             android:label="@string/title_activity_main2" />
         <activity
             android:name=".ui.TutorialActivity"
-            android:exported="true"/>
-        <activity
-            android:name=".ui.MainActivityy"
-            android:exported="false" />
+            android:exported="false"/>
     </application>
 
 </manifest>

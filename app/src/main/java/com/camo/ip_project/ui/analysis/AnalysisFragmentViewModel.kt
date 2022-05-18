@@ -1,10 +1,30 @@
-package com.camo.ip_project.ui.home
+/****************************************************************************************
+ * Copyright <2022> <Saurav Rao> <sauravrao637@gmail.com>                                *
+ *                                                                                       *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this  *
+ * software and associated documentation files (the "Software"), to deal in the Software *
+ * without restriction, including without limitation the rights to use, copy, modify,    *
+ * merge, publish, distribute, sublicense, and/or sell copies of the Software, and to    *
+ * permit persons to whom the Software is furnished to do so, subject to the following   *
+ * conditions:                                                                           *
+ *                                                                                       *
+ * The above copyright notice and this permission notice shall be included in all copies *
+ * or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,   *
+ * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A         *
+ * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT    *
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF  *
+ * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE  *
+ * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                                         *
+ *****************************************************************************************/
+
+package com.camo.ip_project.ui.analysis
 
 import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.camo.ip_project.database.Repository
-import com.camo.ip_project.ui.Utility
 import com.camo.ip_project.util.Resource
 import com.camo.ip_project.util.hrv.AnalysisData
 import com.jjoe64.graphview.series.DataPoint
@@ -18,11 +38,10 @@ import javax.inject.Inject
 import kotlin.math.min
 
 @HiltViewModel
-class HomeViewModel @Inject constructor(
-    private val cgRepo: Repository,
+class AnalysisFragmentViewModel @Inject constructor(
+    private val repo: Repository,
     private val context: Application
 ) : ViewModel() {
-    private var lock = false
     private val _analysisState = MutableStateFlow(false)
     val analysisState: StateFlow<Boolean> get() = _analysisState
 
@@ -40,16 +59,17 @@ class HomeViewModel @Inject constructor(
 
     fun toggleAnalysis() {
         if (_analysisState.value) {
+            _analysedData.value = Resource.idle()
             cancelAnalysis()
         } else startAnalysis()
     }
 
     private fun startAnalysis() {
-        if (lock) return
         _analysisState.value = true
         _analysisProgress.value = 0
         _analysedData.value = Resource.idle()
         _analysisData = AnalysisData()
+        mSeries1.resetData(arrayOf())
     }
 
     fun updateProgress(progress: Double) {
@@ -62,7 +82,6 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun cancelAnalysis() {
-        if(lock) return
         endAnalysis()
         reset()
     }
@@ -78,33 +97,25 @@ class HomeViewModel @Inject constructor(
     }
 
     private var analysisFinalDataJob: Job? = null
+
     @OptIn(DelicateCoroutinesApi::class)
     fun processingComplete() {
         analysisFinalDataJob?.cancel()
         _analysedData.value = Resource.loading()
-        GlobalScope.launch {
-            lock = true
-            Utility.saveHrvData(
-                context,
-                _analysisData!!.getSignal(),
-                _analysisData!!.getTime()
-            )
-            lock = false
-        }
         analysisFinalDataJob = viewModelScope.launch {
             withContext(Dispatchers.IO) {
                 endAnalysis()
-                lock = true
                 _analysedData.value = try {
                     val data = _analysisData?.getData()
                     Timber.d("analysed")
                     if (data == null) Resource.error(errorInfo = "Something went wrong")
-                    else Resource.success(data)
+                    else {
+                        Resource.success(data)
+                    }
                 } catch (e: Exception) {
                     e.printStackTrace()
                     Resource.error(errorInfo = e.localizedMessage ?: "E")
                 }
-                lock = false
                 Timber.d("ended")
             }
         }
@@ -112,7 +123,6 @@ class HomeViewModel @Inject constructor(
 
     fun signalListener(rAvg: Double, t: Long) {
         _analysisData?.addSignalData(rAvg, t)
-        mSeries1.appendData(DataPoint((_analysisData?.getTime()?.size?:1)*1.0,rAvg),true,100)
+        mSeries1.appendData(DataPoint((_analysisData?.getTime()?.size ?: 1) * 1.0, rAvg), true, 100)
     }
-
 }

@@ -1,5 +1,6 @@
 package com.camo.ip_project.util
 
+import android.graphics.Color
 import com.github.psambit9791.jdsp.filter.Butterworth
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics
 import timber.log.Timber
@@ -73,62 +74,10 @@ object ImageProcessing {
         val frameSize = width * height * 1.0
         val sumArray = decodeYUV420SPtoRGBSum(yuv420sp, width, height)
         val ret = listOf(sumArray[0] / frameSize, sumArray[1] / frameSize, sumArray[2] / frameSize)
+//        val hsv = FloatArray(3)
+//        val currentColor = Color.rgb((sumArray[0]/ frameSize).toInt(), (sumArray[1] / frameSize).toInt(), (sumArray[2] / frameSize).toInt())
+//        Color.colorToHSV(currentColor, hsv)
         Timber.d("width: $width,height: $height, size: ${yuv420sp.size} sums: $ret")
         return ret
     }
-
-    fun fft(input: Array<Double>, size: Int, samplingFrequency: Double): Double {
-        var temp = 0.0
-        var pomp = 0.0
-        val output = DoubleArray(2 * size)
-        for (i in output.indices) output[i] = 0.0
-        for (x in 0 until size) {
-            output[x] = input[x]
-        }
-        val fft = DoubleFft1d(size)
-        fft.realForward(output)
-        for (x in 0 until 2 * size) {
-            output[x] = abs(output[x])
-        }
-        for (p in 35 until size) {
-//            12 was chosen because it is a minimum frequency that we think people can get to determine heart rate.
-            if (temp < output[p]) {
-                temp = output[p]
-                pomp = p.toDouble()
-            }
-        }
-        if (pomp < 35) {
-            pomp = 0.0
-        }
-//        return frequency
-        return pomp * samplingFrequency / (2 * size)
-    }
-
-    fun fft2(input: Array<Double>, size: Int, samplingFrequency: Double): Double {
-        var temp = 0.0
-        var pomp = 0.0
-        val output = DoubleArray(2 * size)
-        val butterworth = Butterworth(input.toDoubleArray(),samplingFrequency)
-        val output2 = butterworth.bandPassFilter(2, 0.2, 0.3)
-        for (i in output.indices) output[i] = 0.0
-        for (x in 0 until size) {
-            output[x] = input[x]
-        }
-//        val fft = DoubleFft1d(size)
-//        fft.realForward(output)
-//        for (x in 0 until 2 * size) {
-//            output[x] = butterworth.filter(output[x])
-//        }
-        for (x in 0 until size) {
-            output2[x] = abs(output2[x])
-        }
-        for (p in 12 until size) {
-            if (temp < output2[p]) {
-                temp = output2[p]
-                pomp = p.toDouble()
-            }
-        }
-        return pomp * samplingFrequency / (2 * size)
-    }
-
 }

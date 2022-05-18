@@ -19,16 +19,36 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                                         *
  *****************************************************************************************/
 
-package com.camo.ip_project.ui.dashboard
+package com.camo.ip_project.ui.info
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.camo.ip_project.databinding.FragmentAboutInfoBinding
 
-class DashboardViewModel : ViewModel() {
+class AboutInfoFragment : Fragment() {
 
-    private val _text = MutableLiveData<String>().apply {
-        value = "This is dashboard Fragment"
+    private var _binding: FragmentAboutInfoBinding? = null
+    private val binding get() = _binding!!
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+
+        _binding = FragmentAboutInfoBinding.inflate(inflater, container, false)
+        val root: View = binding.root
+        binding.rvLibraryUsed.adapter = LibrariesUsedRVAdapter()
+        binding.rvLibraryUsed.layoutManager = LinearLayoutManager(binding.root.context)
+        return root
     }
-    val text: LiveData<String> = _text
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
 }

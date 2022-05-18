@@ -10,10 +10,17 @@
         <item>reply_all</item>
     </string-array>
 
-    <string-array name="camera_stabilizing_time">
+    <string-array name="camera_stabilizing_time_entries">
+        <item>Default</item>
         <item>2</item>
         <item>3</item>
         <item>4</item>
+    </string-array>
+    <string-array name="camera_stabilizing_time_values">
+        <item>0</item>
+        <item>2000</item>
+        <item>3000</item>
+        <item>4000</item>
     </string-array>
 
 </resources>
