@@ -1,6 +1,6 @@
 ﻿
 <h1 align = "center">HRV APP</h1>       
-<h3 align="center">Guide: Anubha Gupta</h3>
+<h3 align="center">Guide: Anubha Gupta, Manukumar Shetty</h3>
 <h3 align="center">  Authors:- Piyush Sharma(2019070), Saurav Rao(2019271)  </h3>    
 
 **Problem Statement**  
