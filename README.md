@@ -90,4 +90,4 @@ Resampled and peaks
 
 * <https://blog.google/technology/health/take-pulse-health-and-wellness-your-phone/>
 
-*<https://ieeexplore.ieee.org/document/6864425>
+* <https://ieeexplore.ieee.org/document/6864425>
