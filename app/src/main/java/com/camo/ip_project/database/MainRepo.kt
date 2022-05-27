@@ -21,5 +21,5 @@ import com.camo.ip_project.database.local.model.UserHRV
 import javax.inject.Inject
 
 class Repository @Inject constructor(private val db: LocalAppDb) {
-    suspend fun addData(data: UserHRV) = db.userHrvDao().addData(data)
+    suspend fun addData(data: UserHRV): Long = db.userHrvDao().addData(data)
 }

@@ -35,7 +35,11 @@ object Utility {
         arrayOf(Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE)
     const val PERMISSIONS_ALL = 1
     const val DEFAULT_CST = 1000
-    val OUTPUT_DATA: String get() = run { "hrv_processing_data_${System.currentTimeMillis()}.txt" }
+
+    private const val OUTPUT_DATA_FILE_NAME_PREFIX = "hrv_processing_data"
+    fun getFileNameForHrvData(username: String, timestamp: Long): String {
+        return "${OUTPUT_DATA_FILE_NAME_PREFIX}_${timestamp}_$username"
+    }
 
     object PreferenceKey {
         const val DEBUG = "debug"

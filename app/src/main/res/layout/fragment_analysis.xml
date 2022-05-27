@@ -11,7 +11,8 @@
         layout="@layout/result_layout"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintBottom_toTopOf="@+id/graphView"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintBottom_toTopOf="@+id/etPatientName"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -103,6 +104,36 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.5" />
+        app:layout_constraintGuide_percent="0.4991708" />
+
+    <EditText
+        android:id="@+id/etPatientName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:ems="10"
+        android:hint="@string/patient_name"
+        android:importantForAutofill="no"
+        android:inputType="textPersonName"
+        android:singleLine="true"
+        android:textColorHint="#78909C"
+        android:textSize="24sp"
+        app:layout_constraintBottom_toTopOf="@id/guideline9"
+        app:layout_constraintEnd_toStartOf="@+id/guideline2"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <Button
+        android:id="@+id/btnSaveData"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:text="@string/save"
+        app:layout_constraintBottom_toBottomOf="@+id/etPatientName"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/guideline2"
+        app:layout_constraintTop_toTopOf="@+id/etPatientName" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

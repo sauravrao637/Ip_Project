@@ -30,7 +30,7 @@ import com.camo.ip_project.database.local.model.UserHRV
 @Dao
 interface UserHRVDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun addData(data: UserHRV)
+    suspend fun addData(data: UserHRV): Long
 
     @Query("DELETE FROM UserHRV")
     suspend fun deleteAllData()

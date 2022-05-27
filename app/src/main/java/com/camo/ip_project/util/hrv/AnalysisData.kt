@@ -74,7 +74,8 @@ class AnalysisData {
             signal: ArrayList<Double>,
             tt: ArrayList<Double>
         ): AnalysedData {
-            var toWrite = "\n\n %${System.currentTimeMillis()}"
+            val timestamp = System.currentTimeMillis()
+            var toWrite = "\n\n %${timestamp}"
             var startTime = tt[0]
             val t = mutableListOf<Double>()
             for (i in tt) {
@@ -130,11 +131,13 @@ class AnalysisData {
             val resampledSignal = cbs.getValue(resampledTimeStamps)
             toWrite += "\nresampledSignal= ${resampledSignal.toList()};"
             toWrite += "\nresampledTime= ${resampledTimeStamps.toList()};"
+
 //            find peaks
             val fp = FindPeak(resampledSignal)
             val output = fp.detectPeaks()
             val peaks = output.peaks
             toWrite += "\npeaks= ${peaks.toList()};"
+
 //            calculating intervals (interval of 1 unit corresponds to 5ms when resampled at 200Hz)
             val intervals = arrayListOf<Double>()
             for (i in 1 until peaks.size) {
@@ -147,23 +150,30 @@ class AnalysisData {
             for (i in intervals) {
                 meanNNI += (i / intervals.size)
             }
+
             val vr = Utility.getVarianceDouble(intervals)
             val sd = sqrt(vr)
             val rmssd = getRmssd(intervals)
 
             val bpm = (60 * peaks.size / (newTotalTimeMs / 1000)).toInt()
+
             Timber.d("ts $newStartTime te $newEndTime t $tPerFrame vr: $vr bpm: $bpm, rmssd $rmssd, meanNNI: $meanNNI, sd: $sd")
+
             toWrite += "\n"
+            toWrite +="rmssd = $rmssd;\nbpm = $bpm;\nNNI = $meanNNI;\nsd = $sd;"
+
             val resampledData = Array(resampledSignal.size) {
                 DataPoint(resampledTimeStamps[it] / 1000, resampledSignal[it])
             }
+
             return AnalysedData(
                 rmssd.toInt(),
                 bpm,
                 meanNNI.toInt(),
                 sd.toInt(),
                 toWrite,
-                resampledData
+                resampledData,
+                timestamp
             )
         }
 
@@ -182,10 +192,11 @@ class AnalysisData {
         data class AnalysedData(
             val rmssd: Int,
             val bpm: Int,
-            val NNI: Int,
+            val nni: Int,
             val sd: Int,
             val outText: String,
-            val resampledData: Array<DataPoint>
+            val resampledData: Array<DataPoint>,
+            val unixTimestamp: Long
         ) {
             override fun equals(other: Any?): Boolean {
                 if (this === other) return true
@@ -195,7 +206,7 @@ class AnalysisData {
 
                 if (rmssd != other.rmssd) return false
                 if (bpm != other.bpm) return false
-                if (NNI != other.NNI) return false
+                if (nni != other.nni) return false
                 if (sd != other.sd) return false
                 if (outText != other.outText) return false
                 if (!resampledData.contentEquals(other.resampledData)) return false
@@ -206,7 +217,7 @@ class AnalysisData {
             override fun hashCode(): Int {
                 var result = rmssd
                 result = 31 * result + bpm
-                result = 31 * result + NNI
+                result = 31 * result + nni
                 result = 31 * result + sd
                 result = 31 * result + outText.hashCode()
                 result = 31 * result + resampledData.contentHashCode()

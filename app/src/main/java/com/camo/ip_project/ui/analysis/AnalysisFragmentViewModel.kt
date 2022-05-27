@@ -25,14 +25,21 @@ import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.camo.ip_project.database.Repository
+import com.camo.ip_project.database.local.model.UserHRV
 import com.camo.ip_project.util.Resource
+import com.camo.ip_project.util.Status
 import com.camo.ip_project.util.hrv.AnalysisData
 import com.jjoe64.graphview.series.DataPoint
 import com.jjoe64.graphview.series.LineGraphSeries
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 import javax.inject.Inject
 import kotlin.math.min
@@ -42,6 +49,15 @@ class AnalysisFragmentViewModel @Inject constructor(
     private val repo: Repository,
     private val context: Application
 ) : ViewModel() {
+    private val _username = MutableStateFlow("")
+    val username: StateFlow<String> get() = _username
+
+    private val _saveResponse = Channel<String>()
+    val saveResponse = _saveResponse.receiveAsFlow()
+
+    private val _saveBtnState = MutableStateFlow(false)
+    val saveBtnState: StateFlow<Boolean> get() = _saveBtnState
+
     private val _analysisState = MutableStateFlow(false)
     val analysisState: StateFlow<Boolean> get() = _analysisState
 
@@ -87,6 +103,7 @@ class AnalysisFragmentViewModel @Inject constructor(
     }
 
     private fun reset() {
+        _saveBtnState.value = false
         _analysisData = null
         mSeries1.resetData(arrayOf())
     }
@@ -97,8 +114,6 @@ class AnalysisFragmentViewModel @Inject constructor(
     }
 
     private var analysisFinalDataJob: Job? = null
-
-    @OptIn(DelicateCoroutinesApi::class)
     fun processingComplete() {
         analysisFinalDataJob?.cancel()
         _analysedData.value = Resource.loading()
@@ -110,10 +125,12 @@ class AnalysisFragmentViewModel @Inject constructor(
                     Timber.d("analysed")
                     if (data == null) Resource.error(errorInfo = "Something went wrong")
                     else {
+                        _saveBtnState.value = true
                         Resource.success(data)
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
+                    _saveBtnState.value = false
                     Resource.error(errorInfo = e.localizedMessage ?: "E")
                 }
                 Timber.d("ended")
@@ -124,5 +141,40 @@ class AnalysisFragmentViewModel @Inject constructor(
     fun signalListener(rAvg: Double, t: Long) {
         _analysisData?.addSignalData(rAvg, t)
         mSeries1.appendData(DataPoint((_analysisData?.getTime()?.size ?: 1) * 1.0, rAvg), true, 100)
+    }
+
+    fun setUsername(username: String) {
+        _username.value = username
+    }
+
+    fun canSave(): Boolean {
+        return (analysedData.value.status == Status.SUCCESS) && analysedData.value.data != null
+    }
+
+    fun saveData() {
+        viewModelScope.launch(Dispatchers.IO) {
+            if (!canSave()) {
+                _saveResponse.send("Can't save :)")
+                return@launch
+            }
+            val data = analysedData.value.data!!
+            _saveBtnState.value = false
+            try {
+                val id = repo.addData(
+                    UserHRV(
+                        userName = username.value,
+                        heartRate = data.bpm,
+                        sdnn = data.sd,
+                        rmssd = data.bpm,
+                        nni = data.bpm,
+                        unixTimestamp = data.unixTimestamp
+                    )
+                )
+                _saveResponse.send("Success id = $id")
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _saveResponse.send("Error " + (e.localizedMessage ?: "Something went wrong :)"))
+            }
+        }
     }
 }

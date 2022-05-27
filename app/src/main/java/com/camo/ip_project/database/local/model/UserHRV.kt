@@ -28,7 +28,7 @@ import androidx.room.PrimaryKey
 @Entity(indices = [Index("userName")])
 class UserHRV(
     @PrimaryKey(autoGenerate = true)
-    val id: Int = 0,
+    val id: Long = 0,
     val userName: String,
     val heartRate: Int,
     val sdnn: Int,

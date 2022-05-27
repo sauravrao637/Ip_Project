@@ -36,13 +36,14 @@ import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
+import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.camo.ip_project.R
 import com.camo.ip_project.databinding.FragmentAnalysisBinding
 import com.camo.ip_project.ui.BaseActivity
-import com.camo.ip_project.ui.Utility.OUTPUT_DATA
+import com.camo.ip_project.ui.Utility.getFileNameForHrvData
 import com.camo.ip_project.util.RAnalyzer
 import com.camo.ip_project.util.Status
 import com.jjoe64.graphview.series.LineGraphSeries
@@ -90,6 +91,11 @@ class AnalysisFragment : Fragment() {
         return root
     }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        binding.etPatientName.setText(viewModel.username.value)
+    }
+
     private fun setupUi() {
         startCamera()
         cameraExecutor = Executors.newSingleThreadExecutor()
@@ -111,6 +117,24 @@ class AnalysisFragment : Fragment() {
         binding.cameraCaptureButton.setOnClickListener {
             viewModel.toggleAnalysis()
         }
+
+        binding.btnSaveData.setOnClickListener {
+            viewModel.saveData()
+            if (viewModel.canSave()) {
+                val data = viewModel.analysedData.value.data!!
+                (activity as BaseActivity).writeToTxtFile(
+                    getFileNameForHrvData(
+                        viewModel.username.value,
+                        data.unixTimestamp
+                    ), data.outText
+                )
+            }
+        }
+
+        binding.etPatientName.doOnTextChanged { text, start, before, count ->
+            viewModel.setUsername(text.toString())
+        }
+
         lifecycleScope.launchWhenStarted {
             viewModel.analysisState.collect {
                 if (it) {
@@ -126,6 +150,7 @@ class AnalysisFragment : Fragment() {
                 }
             }
         }
+
         lifecycleScope.launchWhenStarted {
             viewModel.analysedData.collect {
                 when (it.status) {
@@ -155,27 +180,48 @@ class AnalysisFragment : Fragment() {
                         binding.cameraCaptureButton.isEnabled = false
                     }
                     Status.SUCCESS -> {
-                        (activity as BaseActivity).writeToTxtFile(OUTPUT_DATA, it.data!!.outText)
-                        binding.result.apply {
-                            tvBpm.text = it.data.bpm.toString()
-                            tvRmssd.text = it.data.rmssd.toString()
-                            tvSdnn.text = it.data.sd.toString()
-                            tvNni.text = it.data.NNI.toString()
+                        if (it.data == null) {
+                            Timber.d("BUG: No data in success resource")
+                            Toast.makeText(
+                                context,
+                                "Something unexpected happened :)",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        } else {
+                            binding.result.apply {
+                                tvBpm.text = it.data.bpm.toString()
+                                tvRmssd.text = it.data.rmssd.toString()
+                                tvSdnn.text = it.data.sd.toString()
+                                tvNni.text = it.data.nni.toString()
+                            }
+                            binding.cameraCaptureButton.isEnabled = true
+                            binding.graphView.visibility = View.GONE
+                            binding.graphView2.visibility = View.VISIBLE
+                            binding.graphView2.removeAllSeries()
+                            binding.graphView2.addSeries(LineGraphSeries(it.data.resampledData))
                         }
-                        binding.cameraCaptureButton.isEnabled = true
-                        binding.graphView.visibility = View.GONE
-                        binding.graphView2.visibility = View.VISIBLE
-                        binding.graphView2.removeAllSeries()
-                        binding.graphView2.addSeries(LineGraphSeries(it.data.resampledData))
                     }
                 }
             }
         }
+
         lifecycleScope.launchWhenStarted {
             viewModel.analysisProgress.collect {
                 withContext(Dispatchers.Main) {
                     binding.progressBar.setProgress(it, true)
                 }
+            }
+        }
+
+        lifecycleScope.launchWhenStarted {
+            viewModel.saveBtnState.collect {
+                binding.btnSaveData.visibility = if (it) View.VISIBLE else View.INVISIBLE
+            }
+        }
+
+        lifecycleScope.launchWhenStarted {
+            viewModel.saveResponse.collect {
+                if (it.isNotBlank()) Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
             }
         }
     }
