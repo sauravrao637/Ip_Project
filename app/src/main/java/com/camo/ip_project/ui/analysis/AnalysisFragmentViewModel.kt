@@ -21,7 +21,6 @@
 
 package com.camo.ip_project.ui.analysis
 
-import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.camo.ip_project.database.Repository
@@ -46,8 +45,7 @@ import kotlin.math.min
 
 @HiltViewModel
 class AnalysisFragmentViewModel @Inject constructor(
-    private val repo: Repository,
-    private val context: Application
+    private val repo: Repository
 ) : ViewModel() {
     private val _username = MutableStateFlow("")
     val username: StateFlow<String> get() = _username
@@ -165,8 +163,8 @@ class AnalysisFragmentViewModel @Inject constructor(
                         userName = username.value,
                         heartRate = data.bpm,
                         sdnn = data.sd,
-                        rmssd = data.bpm,
-                        nni = data.bpm,
+                        rmssd = data.rmssd,
+                        nni = data.nni,
                         unixTimestamp = data.unixTimestamp
                     )
                 )

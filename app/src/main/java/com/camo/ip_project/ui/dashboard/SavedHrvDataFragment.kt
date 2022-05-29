@@ -25,32 +25,50 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
-import com.camo.ip_project.databinding.FragmentDashboardBinding
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Observer
+import androidx.recyclerview.widget.DividerItemDecoration
+import com.camo.ip_project.database.local.model.UserHRV
+import com.camo.ip_project.databinding.FragmentSavedHrvDataBinding
+import dagger.hilt.android.AndroidEntryPoint
 
-class DashboardFragment : Fragment() {
 
-    private var _binding: FragmentDashboardBinding? = null
+@AndroidEntryPoint
+class SavedHrvDataFragment : Fragment() {
+
+    private val viewModel: SavedHrvDataViewModel by viewModels()
+
+    private var _binding: FragmentSavedHrvDataBinding? = null
     private val binding get() = _binding!!
-
+    private lateinit var adapter: HrvDataRVAdapter
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val dashboardViewModel =
-            ViewModelProvider(this)[DashboardViewModel::class.java]
+        _binding = FragmentSavedHrvDataBinding.inflate(inflater, container, false)
+        adapter = HrvDataRVAdapter(arrayListOf())
+        binding.rvHrvData.adapter = adapter
+        binding.root.isEnabled = false
+        val dividerItemDecoration = DividerItemDecoration(
+            binding.rvHrvData.context,
+            DividerItemDecoration.VERTICAL
+        )
+        binding.rvHrvData.addItemDecoration(dividerItemDecoration)
+        return binding.root
+    }
 
-        _binding = FragmentDashboardBinding.inflate(inflater, container, false)
-        val root: View = binding.root
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        setupListeners()
+    }
 
-        val textView: TextView = binding.textDashboard
-        dashboardViewModel.text.observe(viewLifecycleOwner) {
-            textView.text = it
+    private fun setupListeners() {
+        val observer = Observer<List<UserHRV>>() {
+            adapter.updateData(it)
         }
-        return root
+        viewModel.data.observe(viewLifecycleOwner, observer)
     }
 
     override fun onDestroyView() {

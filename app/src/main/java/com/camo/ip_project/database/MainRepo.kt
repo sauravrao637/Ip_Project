@@ -16,10 +16,13 @@
 
 package com.camo.ip_project.database
 
+import androidx.lifecycle.LiveData
 import com.camo.ip_project.database.local.LocalAppDb
 import com.camo.ip_project.database.local.model.UserHRV
 import javax.inject.Inject
 
 class Repository @Inject constructor(private val db: LocalAppDb) {
     suspend fun addData(data: UserHRV): Long = db.userHrvDao().addData(data)
+
+    fun getData(): LiveData<List<UserHRV>> = db.userHrvDao().getData()
 }

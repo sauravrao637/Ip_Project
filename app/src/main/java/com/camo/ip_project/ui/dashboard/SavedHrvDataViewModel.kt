@@ -24,11 +24,11 @@ package com.camo.ip_project.ui.dashboard
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.camo.ip_project.database.Repository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
-class DashboardViewModel : ViewModel() {
-
-    private val _text = MutableLiveData<String>().apply {
-        value = "This is dashboard Fragment"
-    }
-    val text: LiveData<String> = _text
+@HiltViewModel
+class SavedHrvDataViewModel @Inject constructor(private val repo: Repository) : ViewModel() {
+    val data = repo.getData()
 }

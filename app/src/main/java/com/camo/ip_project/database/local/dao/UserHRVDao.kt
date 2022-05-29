@@ -21,6 +21,7 @@
 
 package com.camo.ip_project.database.local.dao
 
+import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -36,8 +37,8 @@ interface UserHRVDao {
     suspend fun deleteAllData()
 
     @Query("Select * FROM UserHRV")
-    suspend fun getData(): List<UserHRV>
+    fun getData(): LiveData<List<UserHRV>>
 
     @Query("Select * From UserHRV Where userName like :name ORDER BY id")
-    suspend fun getDataFilterByName(name: String): List<UserHRV>
+    fun getDataFilterByName(name: String): LiveData<List<UserHRV>>
 }
