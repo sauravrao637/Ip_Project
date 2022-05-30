@@ -1,4 +1,4 @@
-/****************************************************************************************
+/*****************************************************************************************
  * Copyright <2022> <Saurav Rao> <sauravrao637@gmail.com>                                *
  *                                                                                       *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this  *
@@ -9,8 +9,7 @@
  * conditions:                                                                           *
  *                                                                                       *
  * The above copyright notice and this permission notice shall be included in all copies *
- * or substantial portions of the Software.
- *
+ * or substantial portions of the Software.                                              *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,   *
  * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A         *
  * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT    *
@@ -27,28 +26,31 @@ import android.view.LayoutInflater
 import androidx.lifecycle.lifecycleScope
 import com.camo.ip_project.databinding.StartActivityBinding
 import com.camo.ip_project.ui.Utility.DEFAULT_CST
+import com.camo.ip_project.ui.Utility.SPLASH_SCREEN_TIME
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
-/*
-This is responsible for starting the app with splash screen and set up preferences to default if
-not already set (as in case of first launch)
-*/
+/**
+ * This is responsible for starting the app with splash screen and set up preferences to default if
+ * not already set (as in case of first launch)
+ *
+ * Skips delay on splash screen when debugging is true
+ */
 @AndroidEntryPoint
 @androidx.camera.camera2.interop.ExperimentalCamera2Interop
 class StartActivity : BaseActivity() {
-    private lateinit var binding: StartActivityBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = StartActivityBinding.inflate(LayoutInflater.from(this))
+        val binding = StartActivityBinding.inflate(LayoutInflater.from(this))
         setContentView(binding.root)
 
         setDefaultPreferences()
+
         lifecycleScope.launchWhenStarted {
-            if (!allowDebugging()) delay(1000)
+            if (!allowDebugging()) delay(SPLASH_SCREEN_TIME)
             withContext(Dispatchers.Main) {
                 val intent = Intent(this@StartActivity, TutorialActivity::class.java)
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)

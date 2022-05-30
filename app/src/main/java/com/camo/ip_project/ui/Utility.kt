@@ -23,17 +23,24 @@ package com.camo.ip_project.ui
 
 import android.Manifest
 import android.content.Context
-import android.widget.Toast
 import com.camo.ip_project.R
-import timber.log.Timber
 import java.io.File
-import java.io.FileWriter
-import java.io.IOException
 
+/**
+ * This is utility class for ui/context related functionalities
+ */
 object Utility {
+    /**
+     * time period in milliseconds for splash screen is shown
+     */
+    const val SPLASH_SCREEN_TIME = 1000L
     val REQUIRED_PERMISSIONS =
         arrayOf(Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE)
     const val PERMISSIONS_ALL = 1
+
+    /**
+     * DEFAULT_CST is the default camera stabilizing time in milliseconds
+     */
     const val DEFAULT_CST = 1000
 
     private const val OUTPUT_DATA_FILE_NAME_PREFIX = "hrv_processing_data"
@@ -41,10 +48,23 @@ object Utility {
         return "${OUTPUT_DATA_FILE_NAME_PREFIX}_${timestamp}_$username"
     }
 
+    /**
+     * This class stores the keys used in shared preferences.
+     */
     object PreferenceKey {
         const val DEBUG = "debug"
+
+        /**
+         * LAUNCH_COUNT stores the app launch counter. It increases every time the app is started.
+         */
         const val LAUNCH_COUNT = "launch_count"
         const val DBG_CATEGORY = "dbg_category"
+
+        /**
+         * CST is camera stabilizing time. When the camera is just opened, it shows black frames for
+         * some small time period. We need to ignore these frames. CST is this time period in
+         * milliseconds.
+         */
         const val CAMERA_STABILIZING_TIME = "dbg_cam_stabilizing_time"
     }
 
@@ -54,27 +74,5 @@ object Utility {
         }
         return if (mediaDir != null && mediaDir.exists())
             mediaDir else context.filesDir
-    }
-
-    fun saveHrvData(
-        context: Context,
-        redAvgList: ArrayList<Double>,
-        timestamps: ArrayList<Double>
-    ) {
-        try {
-            val out = FileWriter(
-                File(
-                    getOutputDirectory(context),
-                    "hrv_processing_data_${System.currentTimeMillis()}.txt"
-                )
-            )
-            val c = "RedAvgList\n ${redAvgList.toList()} \n TimeStamps \n${timestamps.toList()}"
-            out.write(c)
-            out.close()
-        } catch (e: IOException) {
-            e.printStackTrace()
-            Toast.makeText(context, "Could not save output file", Toast.LENGTH_LONG).show()
-            Timber.e(e)
-        }
     }
 }

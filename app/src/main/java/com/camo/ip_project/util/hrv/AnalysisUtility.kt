@@ -1,4 +1,4 @@
-/****************************************************************************************
+/*****************************************************************************************
  * Copyright <2022> <Saurav Rao> <sauravrao637@gmail.com>                                *
  *                                                                                       *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this  *
@@ -9,8 +9,7 @@
  * conditions:                                                                           *
  *                                                                                       *
  * The above copyright notice and this permission notice shall be included in all copies *
- * or substantial portions of the Software.
- *
+ * or substantial portions of the Software.                                              *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,   *
  * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A         *
  * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT    *
@@ -21,14 +20,29 @@
 
 package com.camo.ip_project.util.hrv
 
+/**
+ * This class is hold constants required for signal processing in AnalysisData
+ * @see AnalysisData
+ */
 object AnalysisUtility {
-    // minimum sample size in seconds
+    /**
+     * minimum sample size in seconds
+     */
     const val SAMPLE_SIZE = 60
-    // this is the duration of signal in seconds that needs to be removed after smoothening to
-    // ignore corrupted data (must be less than sample size)
+
+    /**
+     * this is the duration of signal in seconds that needs to be removed after smoothening to
+     * ignore corrupted data (must be less than sample size)
+     */
     const val UNRELIABLE_SIGNAL_DURATION = 10
-    // Lower cut off frequency for filter
+
+    /**
+     * Lower cut off frequency for filter
+     */
     const val LOW_CO = 0.667
-    // higher cut off frequency for filter
+
+    /**
+     * higher cut off frequency for filter
+     */
     const val HIGH_CO = 3.5
 }

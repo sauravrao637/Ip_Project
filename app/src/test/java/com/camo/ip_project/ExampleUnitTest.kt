@@ -1,21 +1,15 @@
 package com.camo.ip_project
 
-import com.camo.ip_project.util.RAnalyzer
-import com.camo.ip_project.util.Utility
-import com.camo.ip_project.util.Utility.doubleExponentialForecast
-import com.camo.ip_project.util.Utility.getVarianceLong
-import com.camo.ip_project.util.Utility.toDoubleArray
-import com.camo.ip_project.util.hrv.AnalysisData
+import com.camo.ip_project.util.Extras
+import com.camo.ip_project.util.Extras.getVarianceLong
 import com.camo.ip_project.util.hrv.AnalysisData.Companion.getRmssd
 import com.camo.ip_project.util.hrv.AnalysisUtility
-import com.github.psambit9791.jdsp.filter.Butterworth
 import com.github.psambit9791.jdsp.misc.UtilMethods
 import com.github.psambit9791.jdsp.signal.Smooth
 import com.github.psambit9791.jdsp.signal.peaks.FindPeak
 import com.github.psambit9791.jdsp.splines.CubicSpline
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import timber.log.Timber
 import kotlin.math.sqrt
 
 
@@ -313,7 +307,7 @@ class ExampleUnitTest {
         for (i in intervals) {
             meanNNI += (i / intervals.size)
         }
-        val vr = Utility.getVarianceDouble(intervals)
+        val vr = Extras.getVarianceDouble(intervals)
         val sd = sqrt(vr)
         val rmssd = getRmssd(intervals)
 

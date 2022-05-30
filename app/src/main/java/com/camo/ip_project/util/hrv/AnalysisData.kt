@@ -1,4 +1,4 @@
-/****************************************************************************************
+/*****************************************************************************************
  * Copyright <2022> <Saurav Rao> <sauravrao637@gmail.com>                                *
  *                                                                                       *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this  *
@@ -9,8 +9,7 @@
  * conditions:                                                                           *
  *                                                                                       *
  * The above copyright notice and this permission notice shall be included in all copies *
- * or substantial portions of the Software.
- *
+ * or substantial portions of the Software.                                              *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,   *
  * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A         *
  * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT    *
@@ -21,7 +20,8 @@
 
 package com.camo.ip_project.util.hrv
 
-import com.camo.ip_project.util.Utility
+import com.camo.ip_project.util.Extras
+import com.camo.ip_project.util.hrv.AnalysisData.Companion.AnalysedData
 import com.camo.ip_project.util.hrv.AnalysisUtility.HIGH_CO
 import com.camo.ip_project.util.hrv.AnalysisUtility.LOW_CO
 import com.camo.ip_project.util.hrv.AnalysisUtility.SAMPLE_SIZE
@@ -36,18 +36,23 @@ import timber.log.Timber
 import kotlin.math.pow
 import kotlin.math.sqrt
 
+/**
+ * This class is responsible for analysing various heart rate variability factors using the red
+ * intensities and corresponding timestamps
+ *
+ * @see AnalysedData
+ */
 class AnalysisData {
     private val signal = arrayListOf<Double>()
     private val t = arrayListOf<Double>()
-    private var analysedData: AnalysedData? = null
-    private var analysed = false
+    private lateinit var analysedData: AnalysedData
+
     private fun analyse() {
         analysedData = analyseDataForHrvDefault(signal, t)
-        analysed = true
     }
 
-    fun getData(): AnalysedData? {
-        if (analysed) return analysedData
+    fun getData(): AnalysedData {
+        if (this::analysedData.isInitialized) return analysedData
         analyse()
         return analysedData
     }
@@ -66,19 +71,38 @@ class AnalysisData {
     }
 
     companion object {
-        /*
-        this takes signal(red intensity array) and corresponding timestamp and analyze it for
-        different hrv data
+        /** This takes signal(red intensity array) and corresponding timestamp and analyze it for
+         * different hrv data
+         *
+         * Methodology :-
+         *
+         * 1-> Filter the data with 4th order Butterworth Bandpass Filter with low and high cutoff
+         * frequencies
+         *
+         * 2-> Smoothen the signal with triangular mode (window size = 11)
+         *
+         * 3-> Remove first few seconds of signal considering it as unreliable
+         *
+         * 4-> Resample with cubic spline at 200Hz
+         *
+         * 5-> Find peaks and calculate intervals and get different data accordingly
+         *
+         * @param signal: red intensity of frames
+         * @param timestamps: timestamps of corresponding frames
+         *
+         * @throws SampleVerySmallException: when sample size is less than the required size
+         *
+         * @return AnalysedData
          */
         fun analyseDataForHrvDefault(
             signal: ArrayList<Double>,
-            tt: ArrayList<Double>
+            timestamps: ArrayList<Double>
         ): AnalysedData {
             val timestamp = System.currentTimeMillis()
             var toWrite = "\n\n %${timestamp}"
-            var startTime = tt[0]
+            var startTime = timestamps[0]
             val t = mutableListOf<Double>()
-            for (i in tt) {
+            for (i in timestamps) {
                 t.add(i - startTime)
             }
             startTime = 0.0
@@ -87,10 +111,12 @@ class AnalysisData {
             Timber.d("totalDuration: $totalDuration")
             toWrite += "\nsignal= $signal;\ntime= $t;"
             toWrite += "\ntotalDuration= $totalDuration;"
+
             if (totalDuration < SAMPLE_SIZE) {
                 throw SampleVerySmallException()
             }
-//            Filter the data with 4th order Butterworth Bandpass Filter (lower cutoff freq = 0.667Hz and higher cutoff freq = 3.5Hz)
+//            Filter the data with 4th order Butterworth Bandpass Filter
+//            (lower cutoff freq = LOW_CO and higher cutoff freq = HIGH_CO)
             val sf = signal.size / totalDuration
             val filter = Butterworth(signal.toDoubleArray(), sf)
             val filteredSignal = filter.bandPassFilter(4, LOW_CO, HIGH_CO)
@@ -118,7 +144,7 @@ class AnalysisData {
             val newStartTime = tConcatenated[0]
             val newEndTime = tConcatenated[tConcatenated.size - 1]
 
-//            resample with cubic spline at 200Hz
+//            Resample with cubic spline at 200Hz
             val cbs = CubicSpline()
             cbs.computeFunction(tConcatenated.toDoubleArray(), smoothenedSignal.toDoubleArray())
             val newTotalTimeMs = newEndTime - newStartTime
@@ -151,16 +177,19 @@ class AnalysisData {
                 meanNNI += (i / intervals.size)
             }
 
-            val vr = Utility.getVarianceDouble(intervals)
+            val vr = Extras.getVarianceDouble(intervals)
             val sd = sqrt(vr)
             val rmssd = getRmssd(intervals)
 
             val bpm = (60 * peaks.size / (newTotalTimeMs / 1000)).toInt()
 
-            Timber.d("ts $newStartTime te $newEndTime t $tPerFrame vr: $vr bpm: $bpm, rmssd $rmssd, meanNNI: $meanNNI, sd: $sd")
+            Timber.d(
+                "ts $newStartTime te $newEndTime t $tPerFrame vr: $vr bpm: $bpm %s",
+                "rmssd $rmssd, meanNNI: $meanNNI, sd: $sd"
+            )
 
             toWrite += "\n"
-            toWrite +="rmssd = $rmssd;\nbpm = $bpm;\nNNI = $meanNNI;\nsd = $sd;"
+            toWrite += "rmssd = $rmssd;\nbpm = $bpm;\nNNI = $meanNNI;\nsd = $sd;"
 
             val resampledData = Array(resampledSignal.size) {
                 DataPoint(resampledTimeStamps[it] / 1000, resampledSignal[it])
@@ -177,6 +206,12 @@ class AnalysisData {
             )
         }
 
+        /**
+         * Calculates RMSSD for RR intervals
+         * RMSSD is  root mean square of successive differences between normal heartbeats
+         * @param intervals: RR intervals
+         * @return RMSSD
+         */
         fun getRmssd(intervals: ArrayList<Double>): Double {
             var ans = 0.0
             for (i in 1 until intervals.size) {
@@ -189,6 +224,17 @@ class AnalysisData {
 
         class SampleVerySmallException : Exception("Sample size less than $SAMPLE_SIZE s")
 
+        /**
+         * Responsible for storing in it the analysed data after signal processing is done
+         * @param rmssd: root mean square of successive differences between normal heartbeats
+         * @param bpm: beats per minute
+         * @param sd: standard deviation of NN intervals (SDNN)
+         * @param nni: NN index (average NN interval)
+         * @param unixTimestamp: timestamp of analysis
+         * @param resampledData: signal after processing is done
+         * @param outText: text that can be useful for matlab script debugging and also include
+         * results for the analysis
+         */
         data class AnalysedData(
             val rmssd: Int,
             val bpm: Int,

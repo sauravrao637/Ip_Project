@@ -30,7 +30,7 @@
         <activity
             android:name=".ui.MainActivity"
             android:exported="false"
-            android:label="@string/title_activity_main2" />
+            android:label="@string/title_activity_main" />
         <activity
             android:name=".ui.TutorialActivity"
             android:exported="false"/>

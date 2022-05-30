@@ -1,4 +1,4 @@
-/****************************************************************************************
+/*****************************************************************************************
  * Copyright <2022> <Saurav Rao> <sauravrao637@gmail.com>                                *
  *                                                                                       *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this  *
@@ -9,8 +9,7 @@
  * conditions:                                                                           *
  *                                                                                       *
  * The above copyright notice and this permission notice shall be included in all copies *
- * or substantial portions of the Software.
- *
+ * or substantial portions of the Software.                                              *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,   *
  * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A         *
  * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT    *
@@ -25,13 +24,14 @@ import java.nio.ByteBuffer
 import kotlin.math.pow
 import kotlin.math.sqrt
 
-object Utility {
+object Extras {
     fun ByteBuffer.toByteArray(): ByteArray {
         rewind()    // Rewind the buffer to zero
         val data = ByteArray(remaining())
         get(data)   // Copy the buffer into a byte array
         return data // Return the byte array
     }
+
     fun getVarianceDouble(arrayList: ArrayList<Double>): Double {
         if (arrayList.isEmpty()) return 0.0
         val mean = arrayList.sum() / arrayList.size
@@ -73,6 +73,7 @@ object Utility {
         }
         return array.toDoubleArray()
     }
+
     fun doubleExponentialForecast(
         data: List<Double>,
         alpha: Double,

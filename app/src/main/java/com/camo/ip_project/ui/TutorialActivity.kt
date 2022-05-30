@@ -1,4 +1,4 @@
-/****************************************************************************************
+/*****************************************************************************************
  * Copyright <2022> <Saurav Rao> <sauravrao637@gmail.com>                                *
  *                                                                                       *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this  *
@@ -9,8 +9,7 @@
  * conditions:                                                                           *
  *                                                                                       *
  * The above copyright notice and this permission notice shall be included in all copies *
- * or substantial portions of the Software.
- *
+ * or substantial portions of the Software.                                              *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,   *
  * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A         *
  * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT    *
@@ -37,15 +36,15 @@ import com.camo.ip_project.databinding.ActivityTutorialBinding
 import com.camo.ip_project.ui.Utility.PERMISSIONS_ALL
 import com.camo.ip_project.ui.Utility.PreferenceKey.LAUNCH_COUNT
 import com.camo.ip_project.ui.Utility.REQUIRED_PERMISSIONS
-import com.camo.ip_project.ui.adapters.VpAdapterForLayouts
+import com.camo.ip_project.ui.adapters.LayoutsRVAdapter
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
 import dagger.hilt.android.AndroidEntryPoint
 
-/*
-This is tutorial activity. It is shown at first launch and asks for required permissions.
-If all permissions are granted the app proceeds forward.
-If allowDebugging is true -> skip tutorial and directly check for permissions
+/**
+ * This is tutorial activity. It is shown at first launch and asks for required permissions.
+ * If all permissions are granted the app proceeds forward.
+ * If allowDebugging is true -> skip tutorial and directly check for permissions
  */
 
 @AndroidEntryPoint
@@ -55,7 +54,7 @@ class TutorialActivity : BaseActivity() {
     private lateinit var binding: ActivityTutorialBinding
 
     private lateinit var pages: ArrayList<Int>
-    private lateinit var viewPagerAdapter: VpAdapterForLayouts
+    private lateinit var viewPagerAdapter: LayoutsRVAdapter
     private lateinit var viewPager2: ViewPager2
     private lateinit var layoutdots: TabLayout
 
@@ -94,7 +93,7 @@ class TutorialActivity : BaseActivity() {
         }
         layoutdots = binding.layoutDots
         viewPager2 = binding.viewpager
-        viewPagerAdapter = VpAdapterForLayouts(this, pages)
+        viewPagerAdapter = LayoutsRVAdapter(pages)
         viewPager2.adapter = viewPagerAdapter
         TabLayoutMediator(binding.layoutDots, viewPager2) { tab, position ->
         }.attach()

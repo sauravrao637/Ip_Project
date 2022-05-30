@@ -1,4 +1,4 @@
-/****************************************************************************************
+/*****************************************************************************************
  * Copyright <2022> <Saurav Rao> <sauravrao637@gmail.com>                                *
  *                                                                                       *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this  *
@@ -9,8 +9,7 @@
  * conditions:                                                                           *
  *                                                                                       *
  * The above copyright notice and this permission notice shall be included in all copies *
- * or substantial portions of the Software.
- *
+ * or substantial portions of the Software.                                              *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,   *
  * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A         *
  * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT    *
@@ -24,9 +23,9 @@ package com.camo.ip_project.util
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import com.camo.ip_project.ui.Utility.DEFAULT_CST
-import com.camo.ip_project.util.Constants.COMPLETE_SAMPLING_PERIOD
 import com.camo.ip_project.util.Constants.MIN_RED_INTENSITY
-import com.camo.ip_project.util.Utility.toByteArray
+import com.camo.ip_project.util.Extras.toByteArray
+import com.camo.ip_project.util.hrv.AnalysisUtility.SAMPLE_SIZE
 import timber.log.Timber
 import java.lang.Double.min
 import java.util.concurrent.atomic.AtomicBoolean
@@ -36,12 +35,18 @@ typealias ProgressListener = (progress: Double) -> Unit
 typealias ErrorListener = (error: String) -> Unit
 typealias SignalListener = (redIntensity: Double, time: Long) -> Unit
 
-/*
-This class is responsible for analyzing the frames for red intensity
-cameraStabilizingTime is the time for which we discard the initial frames before starting the
-processing
+/**
+ * This class is responsible for analyzing the frames for red intensity
+ *
+ * @param cameraStabilizingTime: (optional) is the time for which we discard the initial frames
+ * before starting the processing
+ * @param signalListener: called every time red intensity for a frame is calculated
+ * @param errorListener: called when any error is encountered
+ * @param endListener: called when sample is big enough for SAMPLE_SIZE
+ * @param progressListener: receive progress updates
+ * @see SAMPLE_SIZE
  */
-class RAnalyzer(
+class RedIntensityAnalyzer(
     private val progressListener: ProgressListener,
     private val endListener: EndListener,
     private val errorListener: ErrorListener,
@@ -97,9 +102,9 @@ class RAnalyzer(
         }
         signalListener(imgRAvg, currentTime)
         val elapsedAnalysisTime = (currentTime - stableStartAt) / 1000
-        progressListener(min(100.0, elapsedAnalysisTime * 100.0 / COMPLETE_SAMPLING_PERIOD))
+        progressListener(min(100.0, elapsedAnalysisTime * 100.0 / SAMPLE_SIZE))
 
-        if (elapsedAnalysisTime >= COMPLETE_SAMPLING_PERIOD) {
+        if (elapsedAnalysisTime >= SAMPLE_SIZE) {
             endListener()
             reset()
             return

@@ -1,11 +1,6 @@
 package com.camo.ip_project.util
 
-import android.graphics.Color
-import com.github.psambit9791.jdsp.filter.Butterworth
-import org.apache.commons.math3.stat.descriptive.SummaryStatistics
 import timber.log.Timber
-import kotlin.math.abs
-import kotlin.math.sqrt
 
 object ImageProcessing {
     private fun decodeYUV420SPtoRGBSum(
@@ -62,8 +57,8 @@ object ImageProcessing {
      * @param yuv420sp Byte array representing a yuv420sp image
      * @param width    Width of the image.
      * @param height   Height of the image.
-     * @param type     1 for red, 2 for blue and 3 for green
-     * @return int representing the average amount of red in the image.
+     * @return int array of size 3 representing the average amount of (red, green, blue)
+     * in the image.
      */
     fun decodeYUV420SPtoRGBAvg(
         yuv420sp: ByteArray?,

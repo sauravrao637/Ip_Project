@@ -11,7 +11,7 @@
         android:title="Debug Options">
         <DropDownPreference
             android:entries="@array/camera_stabilizing_time_entries"
-            android:summary="huhuihui"
+            android:summary="Seconds the camera requires for stabilizing at start"
             android:entryValues="@array/camera_stabilizing_time_values"
             android:key="dbg_cam_stabilizing_time"
             android:title="Camera Stabilizing Time" />

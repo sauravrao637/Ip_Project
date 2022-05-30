@@ -1,4 +1,4 @@
-/****************************************************************************************
+/*****************************************************************************************
  * Copyright <2022> <Saurav Rao> <sauravrao637@gmail.com>                                *
  *                                                                                       *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this  *
@@ -9,8 +9,7 @@
  * conditions:                                                                           *
  *                                                                                       *
  * The above copyright notice and this permission notice shall be included in all copies *
- * or substantial portions of the Software.
- *
+ * or substantial portions of the Software.                                              *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,   *
  * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A         *
  * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT    *
@@ -44,7 +43,7 @@ import com.camo.ip_project.R
 import com.camo.ip_project.databinding.FragmentAnalysisBinding
 import com.camo.ip_project.ui.BaseActivity
 import com.camo.ip_project.ui.Utility.getFileNameForHrvData
-import com.camo.ip_project.util.RAnalyzer
+import com.camo.ip_project.util.RedIntensityAnalyzer
 import com.camo.ip_project.util.Status
 import com.jjoe64.graphview.series.LineGraphSeries
 import dagger.hilt.android.AndroidEntryPoint
@@ -55,8 +54,8 @@ import timber.log.Timber
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-/*
-    This fragment is responsible for handling the hrv analysis using the camerax api
+/**
+ * This fragment is responsible for handling the hrv analysis using the camerax api
  */
 @AndroidEntryPoint
 @androidx.camera.camera2.interop.ExperimentalCamera2Interop
@@ -66,8 +65,10 @@ class AnalysisFragment : Fragment() {
     private var _binding: FragmentAnalysisBinding? = null
     private val binding get() = _binding!!
     private val viewModel: AnalysisFragmentViewModel by viewModels()
+    lateinit var sharedPreferences: SharedPreferences
+    private var isDebuggingAllowed = false
 
-    //camera
+    // camera
     private var preview: Preview? = null
     private var cameraProvider: ProcessCameraProvider? = null
     private var camera: Camera? = null
@@ -75,20 +76,30 @@ class AnalysisFragment : Fragment() {
     private lateinit var cameraExecutor: ExecutorService
     private val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
-    lateinit var sharedPreferences: SharedPreferences
+    init {
+        Timber.i("initialized")
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentAnalysisBinding.inflate(inflater, container, false)
-        val root: View = binding.root
-        baseActivity = activity as BaseActivity
+        if (activity is BaseActivity) baseActivity = activity as BaseActivity
+        else {
+            throw Exception(
+                "${activity?.localClassName ?: "Activity required"} doesn't extend Base Activity"
+            )
+        }
+
         sharedPreferences = baseActivity.sharedPreferences
-        Timber.d("dbg: ${allowDebugging()}")
+        isDebuggingAllowed = baseActivity.allowDebugging()
+
+        Timber.d("dbg: $isDebuggingAllowed")
         setupUi()
-        listeners()
-        return root
+        setupListeners()
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -113,7 +124,7 @@ class AnalysisFragment : Fragment() {
         }
     }
 
-    private fun listeners() {
+    private fun setupListeners() {
         binding.cameraCaptureButton.setOnClickListener {
             viewModel.toggleAnalysis()
         }
@@ -140,7 +151,8 @@ class AnalysisFragment : Fragment() {
                 if (it) {
                     withContext(Dispatchers.Main) {
                         attachAnalyzer()
-                        binding.cameraCaptureButton.text = requireContext().getText(R.string.cancel)
+                        binding.cameraCaptureButton.text =
+                            requireContext().getText(android.R.string.cancel)
                     }
                 } else {
                     withContext(Dispatchers.Main) {
@@ -230,7 +242,7 @@ class AnalysisFragment : Fragment() {
         imageAnalyzer?.clearAnalyzer()
         imageAnalyzer?.setAnalyzer(
             cameraExecutor,
-            RAnalyzer(
+            RedIntensityAnalyzer(
                 progressListener = { progress -> viewModel.updateProgress(progress) },
                 endListener = {
                     viewModel.processingComplete()
@@ -246,7 +258,6 @@ class AnalysisFragment : Fragment() {
         )
     }
 
-    private fun allowDebugging() = baseActivity.allowDebugging()
     private fun detachAnalyzer() {
         imageAnalyzer?.clearAnalyzer()
     }
@@ -284,7 +295,12 @@ class AnalysisFragment : Fragment() {
                 this, cameraSelector, preview, imageAnalyzer
             )
         } catch (exc: Exception) {
-            Timber.e("Use case binding failed $exc")
+            Toast.makeText(
+                context,
+                exc.localizedMessage ?: "Can't use camera right now :(",
+                Toast.LENGTH_SHORT
+            ).show()
+            Timber.e("Use case binding failed\n $exc")
         }
     }
 

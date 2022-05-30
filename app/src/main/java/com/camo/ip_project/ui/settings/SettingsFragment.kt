@@ -1,4 +1,4 @@
-/****************************************************************************************
+/*****************************************************************************************
  * Copyright <2022> <Saurav Rao> <sauravrao637@gmail.com>                                *
  *                                                                                       *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this  *
@@ -9,8 +9,7 @@
  * conditions:                                                                           *
  *                                                                                       *
  * The above copyright notice and this permission notice shall be included in all copies *
- * or substantial portions of the Software.
- *
+ * or substantial portions of the Software.                                              *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,   *
  * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A         *
  * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT    *
@@ -30,13 +29,18 @@ import com.camo.ip_project.R
 import com.camo.ip_project.ui.Utility.PreferenceKey.DBG_CATEGORY
 import com.camo.ip_project.ui.Utility.PreferenceKey.DEBUG
 import dagger.hilt.android.AndroidEntryPoint
+import timber.log.Timber
 import javax.inject.Inject
 
-/*
-This fragment is responsible for managing different settings across the application
+/**
+ * This fragment is responsible for managing different settings across the application
  */
 @AndroidEntryPoint
 class SettingsFragment : PreferenceFragmentCompat() {
+
+    init {
+        Timber.i("initialized")
+    }
 
     @Inject
     lateinit var sharedPreferences: SharedPreferences

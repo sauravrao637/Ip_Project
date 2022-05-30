@@ -1,4 +1,4 @@
-/****************************************************************************************
+/*****************************************************************************************
  * Copyright <2022> <Saurav Rao> <sauravrao637@gmail.com>                                *
  *                                                                                       *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this  *
@@ -9,8 +9,7 @@
  * conditions:                                                                           *
  *                                                                                       *
  * The above copyright notice and this permission notice shall be included in all copies *
- * or substantial portions of the Software.
- *
+ * or substantial portions of the Software.                                              *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,   *
  * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A         *
  * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT    *
@@ -19,7 +18,7 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                                         *
  *****************************************************************************************/
 
-package com.camo.ip_project.ui.dashboard
+package com.camo.ip_project.ui.savedreports
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -31,17 +30,26 @@ import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.DividerItemDecoration
 import com.camo.ip_project.database.local.model.UserHRV
 import com.camo.ip_project.databinding.FragmentSavedHrvDataBinding
+import com.camo.ip_project.ui.adapters.HrvDataRVAdapter
 import dagger.hilt.android.AndroidEntryPoint
+import timber.log.Timber
 
-
+/**
+ * Fragment for saved hrv analysis data
+ */
 @AndroidEntryPoint
 class SavedHrvDataFragment : Fragment() {
 
     private val viewModel: SavedHrvDataViewModel by viewModels()
-
     private var _binding: FragmentSavedHrvDataBinding? = null
     private val binding get() = _binding!!
+
     private lateinit var adapter: HrvDataRVAdapter
+
+    init {
+        Timber.i("initialized")
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,

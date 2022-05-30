@@ -18,14 +18,45 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                                         *
  *****************************************************************************************/
 
-package com.camo.ip_project.database
+package com.camo.ip_project.ui.adapters
 
-import androidx.lifecycle.LiveData
-import com.camo.ip_project.database.local.LocalAppDb
+import android.view.LayoutInflater
+import android.view.ViewGroup
+import androidx.recyclerview.widget.RecyclerView
 import com.camo.ip_project.database.local.model.UserHRV
-import javax.inject.Inject
+import com.camo.ip_project.databinding.LayoutUserHrvDataBinding
+import java.util.*
 
-class Repository @Inject constructor(private val db: LocalAppDb) {
-    suspend fun addData(data: UserHRV): Long = db.userHrvDao().addData(data)
-    fun getData(): LiveData<List<UserHRV>> = db.userHrvDao().getData()
+class HrvDataRVAdapter(private var list: List<UserHRV>) :
+    RecyclerView.Adapter<HrvDataRVAdapter.ViewHolder>() {
+
+    class ViewHolder(val binding: LayoutUserHrvDataBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        return ViewHolder(LayoutUserHrvDataBinding.inflate(LayoutInflater.from(parent.context)))
+    }
+
+    override fun getItemCount(): Int {
+        return list.size
+    }
+
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        val data = list[position]
+        holder.binding.apply {
+            iResult.tvBpm.text = data.heartRate.toString()
+            iResult.tvNni.text = data.nni.toString()
+            iResult.tvSdnn.text = data.sdnn.toString()
+            iResult.tvRmssd.text = data.rmssd.toString()
+            tvUsername.text = data.userName
+            tvTimestamp.text = Date(data.unixTimestamp).toString()
+        }
+    }
+
+    fun updateData(newList: List<UserHRV>) {
+        list = newList
+        notifyDataSetChanged()
+    }
 }
