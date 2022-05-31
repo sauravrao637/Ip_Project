@@ -4,7 +4,7 @@
     <item
         android:id="@+id/navigation_analysis"
         android:icon="@drawable/ic_home_black_24dp"
-        android:title="@string/analyse" />
+        android:title="@string/analyze" />
     <item
         android:id="@+id/navigation_saved_hrv_data"
         android:icon="@drawable/ic_dashboard_black_24dp"

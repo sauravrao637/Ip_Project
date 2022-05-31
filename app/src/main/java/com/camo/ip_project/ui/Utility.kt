@@ -43,9 +43,9 @@ object Utility {
      */
     const val DEFAULT_CST = 1000
 
-    private const val OUTPUT_DATA_FILE_NAME_PREFIX = "hrv_processing_data"
+    private const val OUTPUT_DATA_FILE_NAME_PREFIX = "hrv"
     fun getFileNameForHrvData(username: String, timestamp: Long): String {
-        return "${OUTPUT_DATA_FILE_NAME_PREFIX}_${timestamp}_$username"
+        return "${OUTPUT_DATA_FILE_NAME_PREFIX}_${timestamp}_$username.txt"
     }
 
     /**

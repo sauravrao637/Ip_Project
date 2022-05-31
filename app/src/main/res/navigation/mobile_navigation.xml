@@ -8,7 +8,7 @@
     <fragment
         android:id="@+id/navigation_analysis"
         android:name="com.camo.ip_project.ui.analysis.AnalysisFragment"
-        android:label="@string/title_home"
+        android:label="@string/title_analyze"
         tools:layout="@layout/fragment_analysis" />
 
     <fragment
